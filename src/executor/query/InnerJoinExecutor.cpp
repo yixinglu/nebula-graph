@@ -5,6 +5,7 @@
  */
 
 #include "executor/query/InnerJoinExecutor.h"
+#include <event2/event_struct.h>
 
 #include "context/Iterator.h"
 #include "context/QueryExpressionContext.h"
@@ -26,73 +27,47 @@ Status InnerJoinExecutor::close() {
 
 folly::Future<Status> InnerJoinExecutor::join() {
     auto* join = asNode<Join>(node());
-    auto bucketSize = lhsIter_->size() > rhsIter_->size() ? rhsIter_->size() : lhsIter_->size();
-
-    auto& hashKeys = join->hashKeys();
-    auto& probeKeys = join->probeKeys();
-    DCHECK_EQ(hashKeys.size(), probeKeys.size());
     DataSet result;
+    result.colNames = join->colNames();
 
     if (lhsIter_->empty() || rhsIter_->empty()) {
-        result.colNames = join->colNames();
         return finish(ResultBuilder().value(Value(std::move(result))).finish());
     }
 
-    if (hashKeys.size() == 1 && probeKeys.size() == 1) {
-        std::unordered_map<Value, std::vector<const Row*>> hashTable;
-        hashTable.reserve(bucketSize);
-        if (lhsIter_->size() < rhsIter_->size()) {
-            buildSingleKeyHashTable(hashKeys.front(), lhsIter_.get(), hashTable);
-            result = singleKeyProbe(probeKeys.front(), rhsIter_.get(), hashTable);
-        } else {
-            exchange_ = true;
-            buildSingleKeyHashTable(probeKeys.front(), rhsIter_.get(), hashTable);
-            result = singleKeyProbe(hashKeys.front(), lhsIter_.get(), hashTable);
-        }
+    if (hasSingleKey()) {
+        result = doJoin<Value>(join);
     } else {
-        std::unordered_map<List, std::vector<const Row*>> hashTable;
-        hashTable.reserve(bucketSize);
-        if (lhsIter_->size() < rhsIter_->size()) {
-            buildHashTable(join->hashKeys(), lhsIter_.get(), hashTable);
-            result = probe(join->probeKeys(), rhsIter_.get(), hashTable);
-        } else {
-            exchange_ = true;
-            buildHashTable(join->probeKeys(), rhsIter_.get(), hashTable);
-            result = probe(join->hashKeys(), lhsIter_.get(), hashTable);
-        }
+        result = doJoin<List>(join);
     }
-    result.colNames = join->colNames();
     return finish(ResultBuilder().value(Value(std::move(result))).finish());
 }
 
+template <typename T>
+DataSet InnerJoinExecutor::doJoin(const Join* join) {
+    auto bucketSize = lhsIter_->size() > rhsIter_->size() ? rhsIter_->size() : lhsIter_->size();
+    std::unordered_map<T, std::vector<const Row*>> hashTable;
+    hashTable.reserve(bucketSize);
+    if (lhsIter_->size() < rhsIter_->size()) {
+        buildHashTable(join->hashKeys(), lhsIter_.get(), hashTable);
+        return probe(join->probeKeys(), rhsIter_.get(), hashTable);
+    } else {
+        exchange_ = true;
+        buildHashTable(join->probeKeys(), rhsIter_.get(), hashTable);
+        return probe(join->hashKeys(), lhsIter_.get(), hashTable);
+    }
+}
+
+template <typename T>
 DataSet InnerJoinExecutor::probe(
     const std::vector<Expression*>& probeKeys,
     Iterator* probeIter,
-    const std::unordered_map<List, std::vector<const Row*>>& hashTable) const {
+    const std::unordered_map<T, std::vector<const Row*>>& hashTable) const {
     DataSet ds;
     QueryExpressionContext ctx(ectx_);
     ds.rows.reserve(probeIter->size());
     for (; probeIter->valid(); probeIter->next()) {
-        List list;
-        list.values.reserve(probeKeys.size());
-        for (auto& col : probeKeys) {
-            Value val = col->eval(ctx(probeIter));
-            list.values.emplace_back(std::move(val));
-        }
-        buildNewRow<List>(hashTable, list, *probeIter->row(), ds);
-    }
-    return ds;
-}
-
-DataSet InnerJoinExecutor::singleKeyProbe(
-    Expression* probeKey,
-    Iterator* probeIter,
-    const std::unordered_map<Value, std::vector<const Row*>>& hashTable) const {
-    DataSet ds;
-    QueryExpressionContext ctx(ectx_);
-    for (; probeIter->valid(); probeIter->next()) {
-        auto& val = probeKey->eval(ctx(probeIter));
-        buildNewRow<Value>(hashTable, val, *probeIter->row(), ds);
+        auto val = Evaluable<T>::eval(probeKeys, probeIter, &ctx);
+        buildNewRow<T>(hashTable, val, *probeIter->row(), ds);
     }
     return ds;
 }

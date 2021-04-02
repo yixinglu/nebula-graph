@@ -13,6 +13,30 @@
 namespace nebula {
 namespace graph {
 
+template <>
+struct JoinExecutor::Evaluable<List> {
+    static auto eval(const std::vector<Expression*>& probeKeys,
+                     Iterator* probeIter,
+                     QueryExpressionContext* ctx) -> List {
+        List list;
+        list.values.reserve(probeKeys.size());
+        for (auto& col : probeKeys) {
+            Value val = col->eval((*ctx)(probeIter));
+            list.values.emplace_back(std::move(val));
+        }
+        return list;
+    }
+};
+
+template <>
+struct JoinExecutor::Evaluable<Value> {
+    static auto eval(const std::vector<Expression*>& probeKeys,
+                     Iterator* probeIter,
+                     QueryExpressionContext* ctx) -> Value {
+        return probeKeys.front()->eval((*ctx)(probeIter));
+    }
+};
+
 Status JoinExecutor::checkInputDataSets() {
     auto* join = asNode<Join>(node());
     lhsIter_ = ectx_->getVersionedResult(join->leftVar().first, join->leftVar().second).iter();
@@ -65,6 +89,14 @@ void JoinExecutor::buildSingleKeyHashTable(
         auto& vals = hashTable[val];
         vals.emplace_back(iter->row());
     }
+}
+
+bool JoinExecutor::hasSingleKey() const {
+    auto join = asNode<Join>(node());
+    auto& hashKeys = join->hashKeys();
+    auto& probeKeys = join->probeKeys();
+    DCHECK_EQ(hashKeys.size(), probeKeys.size());
+    return hashKeys.size() == 1 && probeKeys.size() == 1;
 }
 
 }  // namespace graph

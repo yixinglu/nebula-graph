@@ -31,6 +31,11 @@ protected:
         Iterator* iter,
         std::unordered_map<Value, std::vector<const Row*>>& hashTable) const;
 
+    bool hasSingleKey() const;
+
+    template <typename T>
+    struct Evaluable;
+
     std::unique_ptr<Iterator>                          lhsIter_;
     std::unique_ptr<Iterator>                          rhsIter_;
     size_t                                             colSize_{0};

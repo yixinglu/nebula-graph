@@ -12,6 +12,8 @@
 namespace nebula {
 namespace graph {
 
+class Join;
+
 class InnerJoinExecutor final : public JoinExecutor {
 public:
     InnerJoinExecutor(const PlanNode* node, QueryContext* qctx)
@@ -24,14 +26,13 @@ public:
 private:
     folly::Future<Status> join();
 
+    template <typename T>
+    DataSet doJoin(const Join* join);
+
+    template <typename T>
     DataSet probe(const std::vector<Expression*>& probeKeys,
                   Iterator* probeIter,
-                  const std::unordered_map<List, std::vector<const Row*>>& hashTable) const;
-
-    DataSet singleKeyProbe(
-        Expression* probeKey,
-        Iterator* probeIter,
-        const std::unordered_map<Value, std::vector<const Row*>>& hashTable) const;
+                  const std::unordered_map<T, std::vector<const Row*>>& hashTable) const;
 
     template <class T>
     void buildNewRow(const std::unordered_map<T, std::vector<const Row*>>& hashTable,

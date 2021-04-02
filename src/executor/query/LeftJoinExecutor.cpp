@@ -19,70 +19,38 @@ folly::Future<Status> LeftJoinExecutor::execute() {
     return join();
 }
 
-Status LeftJoinExecutor::close() {
-    return Executor::close();
-}
-
 folly::Future<Status> LeftJoinExecutor::join() {
     auto* join = asNode<Join>(node());
     auto& rhsResult = ectx_->getVersionedResult(join->rightVar().first, join->rightVar().second);
     rightColSize_ = rhsResult.valuePtr()->getDataSet().colNames.size();
 
-    auto& hashKeys = join->hashKeys();
-    auto& probeKeys = join->probeKeys();
-    DCHECK_EQ(hashKeys.size(), probeKeys.size());
-    DataSet result;
-
-    if (hashKeys.size() == 1 && probeKeys.size() == 1) {
-        std::unordered_map<Value, std::vector<const Row*>> hashTable;
-        hashTable.reserve(rhsIter_->size() == 0 ? 1 : rhsIter_->size());
-        if (!lhsIter_->empty()) {
-            buildSingleKeyHashTable(join->probeKeys().front(), rhsIter_.get(), hashTable);
-            result = singleKeyProbe(join->hashKeys().front(), lhsIter_.get(), hashTable);
-        }
-    } else {
-        std::unordered_map<List, std::vector<const Row*>> hashTable;
-        hashTable.reserve(rhsIter_->size() == 0 ? 1 : rhsIter_->size());
-        if (!lhsIter_->empty()) {
-            buildHashTable(join->probeKeys(), rhsIter_.get(), hashTable);
-            result = probe(join->hashKeys(), lhsIter_.get(), hashTable);
-        }
-    }
-
+    DataSet result = hasSingleKey() ? doJoin<Value>(join) : doJoin<List>(join);
     result.colNames = join->colNames();
     return finish(ResultBuilder().value(Value(std::move(result))).finish());
 }
 
+template <typename T>
+DataSet LeftJoinExecutor::doJoin(const Join* join) {
+    std::unordered_map<T, std::vector<const Row*>> hashTable;
+    hashTable.reserve(rhsIter_->size() == 0 ? 1 : rhsIter_->size());
+    if (lhsIter_->empty()) {
+        return DataSet();
+    }
+    buildHashTable(join->probeKeys(), rhsIter_.get(), hashTable);
+    return probe<T>(join->hashKeys(), lhsIter_.get(), hashTable);
+}
+
+template <typename T>
 DataSet LeftJoinExecutor::probe(
     const std::vector<Expression*>& probeKeys,
     Iterator* probeIter,
-    const std::unordered_map<List, std::vector<const Row*>>& hashTable) const {
+    const std::unordered_map<T, std::vector<const Row*>>& hashTable) const {
     DataSet ds;
     ds.rows.reserve(probeIter->size());
     QueryExpressionContext ctx(ectx_);
     for (; probeIter->valid(); probeIter->next()) {
-        List list;
-        list.values.reserve(probeKeys.size());
-        for (auto& col : probeKeys) {
-            Value val = col->eval(ctx(probeIter));
-            list.values.emplace_back(std::move(val));
-        }
-
-        buildNewRow<List>(hashTable, list, *probeIter->row(), ds);
-    }
-    return ds;
-}
-
-DataSet LeftJoinExecutor::singleKeyProbe(
-    Expression* probeKey,
-    Iterator* probeIter,
-    const std::unordered_map<Value, std::vector<const Row*>>& hashTable) const {
-    DataSet ds;
-    ds.rows.reserve(probeIter->size());
-    QueryExpressionContext ctx(ectx_);
-    for (; probeIter->valid(); probeIter->next()) {
-        auto& val = probeKey->eval(ctx(probeIter));
-        buildNewRow<Value>(hashTable, val, *probeIter->row(), ds);
+        auto val = Evaluable<T>::eval(probeKeys, probeIter, &ctx);
+        buildNewRow<T>(hashTable, val, *probeIter->row(), ds);
     }
     return ds;
 }
