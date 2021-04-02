@@ -284,26 +284,11 @@ void RewriteVisitor::visitBinaryExpr(BinaryExpression *expr) {
 }
 
 bool RewriteVisitor::care(Expression::Kind kind) {
-    if (UNLIKELY(!needVisitedTypes_.empty())) {
-        for (auto &k : needVisitedTypes_) {
-            if (kind == k) {
-                return true;
-            }
-        }
-        return false;
+    if (needVisitedTypes_.empty()) {
+        return true;
     }
-    return true;
-}
-
-Expression *RewriteVisitor::transform(const Expression *expr, Matcher matcher, Rewriter rewriter) {
-    if (matcher(expr)) {
-        return rewriter(expr);
-    } else {
-        RewriteVisitor visitor(std::move(matcher), std::move(rewriter));
-        auto exprCopy = expr->clone();
-        exprCopy->accept(&visitor);
-        return exprCopy.release();
-    }
+    auto iter = std::find(needVisitedTypes_.begin(), needVisitedTypes_.end(), kind);
+    return iter != needVisitedTypes_.end();
 }
 
 Expression *RewriteVisitor::transform(
@@ -314,8 +299,7 @@ Expression *RewriteVisitor::transform(
     if (matcher(expr)) {
         return rewriter(expr);
     } else {
-        RewriteVisitor visitor(
-            std::move(matcher), std::move(rewriter), std::move(needVisitedTypes));
+        RewriteVisitor visitor(std::move(matcher), std::move(rewriter), needVisitedTypes);
         auto exprCopy = expr->clone();
         exprCopy->accept(&visitor);
         return exprCopy.release();

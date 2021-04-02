@@ -19,14 +19,10 @@ public:
     using Matcher = std::function<bool(const Expression*)>;
     using Rewriter = std::function<Expression*(const Expression*)>;
 
-    static Expression* transform(const Expression* expr,
-                                 Matcher matcher,
-                                 Rewriter rewriter);
-
-    static Expression* transform(const Expression* expr,
+    static Expression *transform(const Expression *expr,
                                  Matcher matcher,
                                  Rewriter rewriter,
-                                 const std::unordered_set<Expression::Kind>& needVisitedTypes);
+                                 const std::unordered_set<Expression::Kind> &needVisitedTypes = {});
 
     const Matcher matcher() const {
         return matcher_;
@@ -38,22 +34,16 @@ public:
 
 private:
     explicit RewriteVisitor(Matcher matcher,
-                            Rewriter rewriter)
-        : matcher_(std::move(matcher)),
-          rewriter_(std::move(rewriter)) {}
-
-    explicit RewriteVisitor(Matcher matcher,
                             Rewriter rewriter,
-                            const std::unordered_set<Expression::Kind>& needVisitedTypes)
+                            const std::unordered_set<Expression::Kind> &needVisitedTypes)
         : matcher_(std::move(matcher)),
           rewriter_(std::move(rewriter)),
-          needVisitedTypes_(std::move(needVisitedTypes)) {}
+          needVisitedTypes_(needVisitedTypes) {}
 
     bool ok() const override {
         return true;
     }
 
-private:
     using ExprVisitorImpl::visit;
     void visit(TypeCastingExpression*) override;
     void visit(UnaryExpression*) override;
@@ -99,7 +89,7 @@ private:
     Matcher                             matcher_;
     Rewriter                            rewriter_;
 
-    std::unordered_set<Expression::Kind> needVisitedTypes_{};
+    std::unordered_set<Expression::Kind> needVisitedTypes_;
 };
 
 }   // namespace graph
