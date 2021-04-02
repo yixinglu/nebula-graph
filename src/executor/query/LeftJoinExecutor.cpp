@@ -36,7 +36,7 @@ DataSet LeftJoinExecutor::doJoin(const Join* join) {
     if (lhsIter_->empty()) {
         return DataSet();
     }
-    buildHashTable(join->probeKeys(), rhsIter_.get(), hashTable);
+    JoinExecutor::buildHashTable<T>(join->probeKeys(), rhsIter_.get(), hashTable);
     return probe<T>(join->hashKeys(), lhsIter_.get(), hashTable);
 }
 

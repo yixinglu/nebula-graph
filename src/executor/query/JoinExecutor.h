@@ -22,14 +22,10 @@ public:
     void buildHashTable(const std::vector<Expression*>& hashKeys, Iterator* iter);
 
 protected:
-    void buildHashTable(const std::vector<Expression*>& hashKeys,
-                        Iterator* iter,
-                        std::unordered_map<List, std::vector<const Row*>>& hashTable) const;
-
-    void buildSingleKeyHashTable(
-        Expression* hashKey,
-        Iterator* iter,
-        std::unordered_map<Value, std::vector<const Row*>>& hashTable) const;
+    template <typename T>
+    static void buildHashTable(const std::vector<Expression*>& hashKeys,
+                               Iterator* iter,
+                               std::unordered_map<T, std::vector<const Row*>>& hashTable);
 
     bool hasSingleKey() const;
 

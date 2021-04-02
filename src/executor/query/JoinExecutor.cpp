@@ -60,33 +60,14 @@ Status JoinExecutor::checkInputDataSets() {
     return Status::OK();
 }
 
-void JoinExecutor::buildHashTable(
-    const std::vector<Expression*>& hashKeys,
-    Iterator* iter,
-    std::unordered_map<List, std::vector<const Row*>>& hashTable) const {
+template <typename T>
+void JoinExecutor::buildHashTable(const std::vector<Expression*>& hashKeys,
+                                  Iterator* iter,
+                                  std::unordered_map<T, std::vector<const Row*>>& hashTable) {
     QueryExpressionContext ctx(ectx_);
     for (; iter->valid(); iter->next()) {
-        List list;
-        list.values.reserve(hashKeys.size());
-        for (auto& col : hashKeys) {
-            Value val = col->eval(ctx(iter));
-            list.values.emplace_back(std::move(val));
-        }
-
+        auto list = Evaluable<T>::eval(hashKeys, iter, &ctx);
         auto& vals = hashTable[list];
-        vals.emplace_back(iter->row());
-    }
-}
-
-void JoinExecutor::buildSingleKeyHashTable(
-    Expression* hashKey,
-    Iterator* iter,
-    std::unordered_map<Value, std::vector<const Row*>>& hashTable) const {
-    QueryExpressionContext ctx(ectx_);
-    for (; iter->valid(); iter->next()) {
-        auto& val = hashKey->eval(ctx(iter));
-
-        auto& vals = hashTable[val];
         vals.emplace_back(iter->row());
     }
 }

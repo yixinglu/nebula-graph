@@ -48,11 +48,11 @@ DataSet InnerJoinExecutor::doJoin(const Join* join) {
     std::unordered_map<T, std::vector<const Row*>> hashTable;
     hashTable.reserve(bucketSize);
     if (lhsIter_->size() < rhsIter_->size()) {
-        buildHashTable(join->hashKeys(), lhsIter_.get(), hashTable);
+        JoinExecutor::buildHashTable<T>(join->hashKeys(), lhsIter_.get(), hashTable);
         return probe(join->probeKeys(), rhsIter_.get(), hashTable);
     } else {
         exchange_ = true;
-        buildHashTable(join->probeKeys(), rhsIter_.get(), hashTable);
+        JoinExecutor::buildHashTable<T>(join->probeKeys(), rhsIter_.get(), hashTable);
         return probe(join->hashKeys(), lhsIter_.get(), hashTable);
     }
 }
