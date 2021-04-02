@@ -9,6 +9,8 @@
 
 #include "executor/Executor.h"
 
+#include "context/QueryExpressionContext.h"
+
 namespace nebula {
 namespace graph {
 
@@ -19,13 +21,13 @@ public:
 
     Status checkInputDataSets();
 
-    void buildHashTable(const std::vector<Expression*>& hashKeys, Iterator* iter);
-
 protected:
+    using Rows = std::vector<const Row*>;
+
     template <typename T>
-    static void buildHashTable(const std::vector<Expression*>& hashKeys,
-                               Iterator* iter,
-                               std::unordered_map<T, std::vector<const Row*>>& hashTable);
+    void buildHashTable(const std::vector<Expression*>& hashKeys,
+                        Iterator* iter,
+                        std::unordered_map<T, Rows>& hashTable) const;
 
     bool hasSingleKey() const;
 
@@ -36,6 +38,43 @@ protected:
     std::unique_ptr<Iterator>                          rhsIter_;
     size_t                                             colSize_{0};
 };
+
+template <>
+struct JoinExecutor::Evaluable<List> {
+    static auto eval(const std::vector<Expression*>& probeKeys,
+                     Iterator* probeIter,
+                     QueryExpressionContext* ctx) -> List {
+        List list;
+        list.values.reserve(probeKeys.size());
+        for (auto& col : probeKeys) {
+            Value val = col->eval((*ctx)(probeIter));
+            list.values.emplace_back(std::move(val));
+        }
+        return list;
+    }
+};
+
+template <>
+struct JoinExecutor::Evaluable<Value> {
+    static auto eval(const std::vector<Expression*>& probeKeys,
+                     Iterator* probeIter,
+                     QueryExpressionContext* ctx) -> Value {
+        return probeKeys.front()->eval((*ctx)(probeIter));
+    }
+};
+
+template <typename T>
+void JoinExecutor::buildHashTable(const std::vector<Expression*>& hashKeys,
+                                  Iterator* iter,
+                                  std::unordered_map<T, Rows>& hashTable) const {
+    QueryExpressionContext ctx(ectx_);
+    for (; iter->valid(); iter->next()) {
+        auto list = Evaluable<T>::eval(hashKeys, iter, &ctx);
+        auto& vals = hashTable[list];
+        vals.emplace_back(iter->row());
+    }
+}
+
 }  // namespace graph
 }  // namespace nebula
 #endif

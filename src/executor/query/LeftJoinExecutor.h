@@ -30,10 +30,10 @@ private:
     template <typename T>
     DataSet probe(const std::vector<Expression*>& probeKeys,
                   Iterator* probeIter,
-                  const std::unordered_map<T, std::vector<const Row*>>& hashTable) const;
+                  const std::unordered_map<T, Rows>& hashTable) const;
 
     template <class T>
-    void buildNewRow(const std::unordered_map<T, std::vector<const Row*>>& hashTable,
+    void buildNewRow(const std::unordered_map<T, Rows>& hashTable,
                      const T& val,
                      const Row& lRow,
                      DataSet& ds) const;

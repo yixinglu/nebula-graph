@@ -45,15 +45,15 @@ folly::Future<Status> InnerJoinExecutor::join() {
 template <typename T>
 DataSet InnerJoinExecutor::doJoin(const Join* join) {
     auto bucketSize = lhsIter_->size() > rhsIter_->size() ? rhsIter_->size() : lhsIter_->size();
-    std::unordered_map<T, std::vector<const Row*>> hashTable;
+    std::unordered_map<T, Rows> hashTable;
     hashTable.reserve(bucketSize);
     if (lhsIter_->size() < rhsIter_->size()) {
         JoinExecutor::buildHashTable<T>(join->hashKeys(), lhsIter_.get(), hashTable);
-        return probe(join->probeKeys(), rhsIter_.get(), hashTable);
+        return probe<T>(join->probeKeys(), rhsIter_.get(), hashTable);
     } else {
         exchange_ = true;
         JoinExecutor::buildHashTable<T>(join->probeKeys(), rhsIter_.get(), hashTable);
-        return probe(join->hashKeys(), lhsIter_.get(), hashTable);
+        return probe<T>(join->hashKeys(), lhsIter_.get(), hashTable);
     }
 }
 
@@ -61,7 +61,7 @@ template <typename T>
 DataSet InnerJoinExecutor::probe(
     const std::vector<Expression*>& probeKeys,
     Iterator* probeIter,
-    const std::unordered_map<T, std::vector<const Row*>>& hashTable) const {
+    const std::unordered_map<T, Rows>& hashTable) const {
     DataSet ds;
     QueryExpressionContext ctx(ectx_);
     ds.rows.reserve(probeIter->size());
@@ -73,7 +73,7 @@ DataSet InnerJoinExecutor::probe(
 }
 
 template <class T>
-void InnerJoinExecutor::buildNewRow(const std::unordered_map<T, std::vector<const Row*>>& hashTable,
+void InnerJoinExecutor::buildNewRow(const std::unordered_map<T, Rows>& hashTable,
                                     const T& val,
                                     const Row& rRow,
                                     DataSet& ds) const {

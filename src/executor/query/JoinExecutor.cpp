@@ -13,30 +13,6 @@
 namespace nebula {
 namespace graph {
 
-template <>
-struct JoinExecutor::Evaluable<List> {
-    static auto eval(const std::vector<Expression*>& probeKeys,
-                     Iterator* probeIter,
-                     QueryExpressionContext* ctx) -> List {
-        List list;
-        list.values.reserve(probeKeys.size());
-        for (auto& col : probeKeys) {
-            Value val = col->eval((*ctx)(probeIter));
-            list.values.emplace_back(std::move(val));
-        }
-        return list;
-    }
-};
-
-template <>
-struct JoinExecutor::Evaluable<Value> {
-    static auto eval(const std::vector<Expression*>& probeKeys,
-                     Iterator* probeIter,
-                     QueryExpressionContext* ctx) -> Value {
-        return probeKeys.front()->eval((*ctx)(probeIter));
-    }
-};
-
 Status JoinExecutor::checkInputDataSets() {
     auto* join = asNode<Join>(node());
     lhsIter_ = ectx_->getVersionedResult(join->leftVar().first, join->leftVar().second).iter();
@@ -58,18 +34,6 @@ Status JoinExecutor::checkInputDataSets() {
     }
     colSize_ = join->colNames().size();
     return Status::OK();
-}
-
-template <typename T>
-void JoinExecutor::buildHashTable(const std::vector<Expression*>& hashKeys,
-                                  Iterator* iter,
-                                  std::unordered_map<T, std::vector<const Row*>>& hashTable) {
-    QueryExpressionContext ctx(ectx_);
-    for (; iter->valid(); iter->next()) {
-        auto list = Evaluable<T>::eval(hashKeys, iter, &ctx);
-        auto& vals = hashTable[list];
-        vals.emplace_back(iter->row());
-    }
 }
 
 bool JoinExecutor::hasSingleKey() const {

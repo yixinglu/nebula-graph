@@ -31,7 +31,7 @@ folly::Future<Status> LeftJoinExecutor::join() {
 
 template <typename T>
 DataSet LeftJoinExecutor::doJoin(const Join* join) {
-    std::unordered_map<T, std::vector<const Row*>> hashTable;
+    std::unordered_map<T, Rows> hashTable;
     hashTable.reserve(rhsIter_->size() == 0 ? 1 : rhsIter_->size());
     if (lhsIter_->empty()) {
         return DataSet();
@@ -44,7 +44,7 @@ template <typename T>
 DataSet LeftJoinExecutor::probe(
     const std::vector<Expression*>& probeKeys,
     Iterator* probeIter,
-    const std::unordered_map<T, std::vector<const Row*>>& hashTable) const {
+    const std::unordered_map<T, Rows>& hashTable) const {
     DataSet ds;
     ds.rows.reserve(probeIter->size());
     QueryExpressionContext ctx(ectx_);
@@ -56,7 +56,7 @@ DataSet LeftJoinExecutor::probe(
 }
 
 template <class T>
-void LeftJoinExecutor::buildNewRow(const std::unordered_map<T, std::vector<const Row*>>& hashTable,
+void LeftJoinExecutor::buildNewRow(const std::unordered_map<T, Rows>& hashTable,
                                    const T& val,
                                    const Row& lRow,
                                    DataSet& ds) const {
