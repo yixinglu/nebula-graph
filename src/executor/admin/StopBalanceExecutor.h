@@ -7,24 +7,23 @@
 #ifndef EXECUTOR_ADMIN_STOPBALANCEEXECUTOR_H_
 #define EXECUTOR_ADMIN_STOPBALANCEEXECUTOR_H_
 
-#include "executor/Executor.h"
 #include "context/QueryContext.h"
+#include "executor/Executor.h"
 
 namespace nebula {
 namespace graph {
 
 class StopBalanceExecutor final : public Executor {
-public:
-    StopBalanceExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("StopBalanceExecutor", node, qctx) {}
+ public:
+  StopBalanceExecutor(const PlanNode *node, QueryContext *qctx) : Executor("StopBalanceExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 
-private:
-    folly::Future<Status> stopBalance();
+ private:
+  folly::Future<Status> stopBalance();
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
 #endif  // EXECUTOR_ADMIN_STOPBALANCEEXECUTOR_H_

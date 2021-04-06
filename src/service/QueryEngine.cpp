@@ -13,8 +13,8 @@
 #include "context/QueryContext.h"
 #include "optimizer/OptRule.h"
 #include "planner/PlannersRegister.h"
-#include "service/QueryInstance.h"
 #include "service/GraphFlags.h"
+#include "service/QueryInstance.h"
 
 DECLARE_bool(local_config);
 DECLARE_bool(enable_optimizer);
@@ -24,57 +24,51 @@ namespace nebula {
 namespace graph {
 
 Status QueryEngine::init(std::shared_ptr<folly::IOThreadPoolExecutor> ioExecutor) {
-    auto addrs = network::NetworkUtils::toHosts(FLAGS_meta_server_addrs);
-    if (!addrs.ok()) {
-        return addrs.status();
-    }
+  auto addrs = network::NetworkUtils::toHosts(FLAGS_meta_server_addrs);
+  if (!addrs.ok()) {
+    return addrs.status();
+  }
 
-    meta::MetaClientOptions options;
-    options.serviceName_ = "graph";
-    options.skipConfig_ = FLAGS_local_config;
-    options.role_ = meta::cpp2::HostRole::GRAPH;
-    auto hostName = FLAGS_local_ip != "" ? FLAGS_local_ip : network::NetworkUtils::getHostname();
-    options.localHost_ = HostAddr{hostName, FLAGS_port};
-    options.gitInfoSHA_ = gitInfoSha();
-    metaClient_ =
-        std::make_unique<meta::MetaClient>(ioExecutor, std::move(addrs.value()), options);
-    // load data try 3 time
-    bool loadDataOk = metaClient_->waitForMetadReady(3);
-    if (!loadDataOk) {
-        // Resort to retrying in the background
-        LOG(WARNING) << "Failed to synchronously wait for meta service ready";
-    }
+  meta::MetaClientOptions options;
+  options.serviceName_ = "graph";
+  options.skipConfig_ = FLAGS_local_config;
+  options.role_ = meta::cpp2::HostRole::GRAPH;
+  auto hostName = FLAGS_local_ip != "" ? FLAGS_local_ip : network::NetworkUtils::getHostname();
+  options.localHost_ = HostAddr{hostName, FLAGS_port};
+  options.gitInfoSHA_ = gitInfoSha();
+  metaClient_ = std::make_unique<meta::MetaClient>(ioExecutor, std::move(addrs.value()), options);
+  // load data try 3 time
+  bool loadDataOk = metaClient_->waitForMetadReady(3);
+  if (!loadDataOk) {
+    // Resort to retrying in the background
+    LOG(WARNING) << "Failed to synchronously wait for meta service ready";
+  }
 
-    schemaManager_ = meta::ServerBasedSchemaManager::create(metaClient_.get());
-    indexManager_ = meta::ServerBasedIndexManager::create(metaClient_.get());
+  schemaManager_ = meta::ServerBasedSchemaManager::create(metaClient_.get());
+  indexManager_ = meta::ServerBasedIndexManager::create(metaClient_.get());
 
-    // gflagsManager_ = std::make_unique<meta::ClientBasedGflagsManager>(metaClient_.get());
+  // gflagsManager_ = std::make_unique<meta::ClientBasedGflagsManager>(metaClient_.get());
 
-    storage_ = std::make_unique<storage::GraphStorageClient>(ioExecutor,
-                                                             metaClient_.get());
-    charsetInfo_ = CharsetInfo::instance();
+  storage_ = std::make_unique<storage::GraphStorageClient>(ioExecutor, metaClient_.get());
+  charsetInfo_ = CharsetInfo::instance();
 
-    PlannersRegister::registPlanners();
+  PlannersRegister::registPlanners();
 
-    std::vector<const opt::RuleSet*> rulesets{&opt::RuleSet::DefaultRules()};
-    if (FLAGS_enable_optimizer) {
-        rulesets.emplace_back(&opt::RuleSet::QueryRules());
-    }
-    optimizer_ = std::make_unique<opt::Optimizer>(rulesets);
+  std::vector<const opt::RuleSet*> rulesets{&opt::RuleSet::DefaultRules()};
+  if (FLAGS_enable_optimizer) {
+    rulesets.emplace_back(&opt::RuleSet::QueryRules());
+  }
+  optimizer_ = std::make_unique<opt::Optimizer>(rulesets);
 
-    return Status::OK();
+  return Status::OK();
 }
 
 void QueryEngine::execute(RequestContextPtr rctx) {
-    auto ectx = std::make_unique<QueryContext>(std::move(rctx),
-                                               schemaManager_.get(),
-                                               indexManager_.get(),
-                                               storage_.get(),
-                                               metaClient_.get(),
-                                               charsetInfo_);
-    auto* instance = new QueryInstance(std::move(ectx), optimizer_.get());
-    instance->execute();
+  auto ectx = std::make_unique<QueryContext>(std::move(rctx), schemaManager_.get(), indexManager_.get(), storage_.get(),
+                                             metaClient_.get(), charsetInfo_);
+  auto* instance = new QueryInstance(std::move(ectx), optimizer_.get());
+  instance->execute();
 }
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula

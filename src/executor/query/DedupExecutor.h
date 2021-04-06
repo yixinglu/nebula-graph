@@ -13,14 +13,13 @@ namespace nebula {
 namespace graph {
 
 class DedupExecutor final : public Executor {
-public:
-    DedupExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("DedupExecutor", node, qctx) {}
+ public:
+  DedupExecutor(const PlanNode *node, QueryContext *qctx) : Executor("DedupExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_QUERY_DEDUPEXECUTOR_H_
+#endif  // EXECUTOR_QUERY_DEDUPEXECUTOR_H_

@@ -18,34 +18,30 @@ class ObjectPool;
 
 namespace graph {
 class QueryContext;
-}   // namespace graph
+}  // namespace graph
 
 namespace opt {
 
 class OptGroupNode;
 
 class OptContext final : private cpp::NonCopyable, private cpp::NonMovable {
-public:
-    explicit OptContext(graph::QueryContext *qctx);
+ public:
+  explicit OptContext(graph::QueryContext *qctx);
 
-    graph::QueryContext *qctx() const {
-        return qctx_;
-    }
+  graph::QueryContext *qctx() const { return qctx_; }
 
-    ObjectPool *objPool() const {
-        return objPool_.get();
-    }
+  ObjectPool *objPool() const { return objPool_.get(); }
 
-    void addPlanNodeAndOptGroupNode(int64_t planNodeId, const OptGroupNode *optGroupNode);
-    const OptGroupNode *findOptGroupNodeByPlanNodeId(int64_t planNodeId) const;
+  void addPlanNodeAndOptGroupNode(int64_t planNodeId, const OptGroupNode *optGroupNode);
+  const OptGroupNode *findOptGroupNodeByPlanNodeId(int64_t planNodeId) const;
 
-private:
-    graph::QueryContext *qctx_{nullptr};
-    std::unique_ptr<ObjectPool> objPool_;
-    std::unordered_map<int64_t, const OptGroupNode *> planNodeToOptGroupNodeMap_;
+ private:
+  graph::QueryContext *qctx_{nullptr};
+  std::unique_ptr<ObjectPool> objPool_;
+  std::unordered_map<int64_t, const OptGroupNode *> planNodeToOptGroupNodeMap_;
 };
 
-}   // namespace opt
-}   // namespace nebula
+}  // namespace opt
+}  // namespace nebula
 
-#endif   // OPTIMIZER_OPTCONTEXT_H_
+#endif  // OPTIMIZER_OPTCONTEXT_H_

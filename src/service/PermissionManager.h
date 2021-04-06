@@ -17,20 +17,18 @@ namespace nebula {
 namespace graph {
 
 class PermissionManager final {
-public:
-    PermissionManager() = delete;
-    static Status canReadSpace(Session *session, GraphSpaceID spaceId);
-    static Status canReadSchemaOrData(Session *session);
-    static Status canWriteSpace(Session *session);
-    static Status canWriteSchema(Session *session);
-    static Status canWriteUser(Session *session);
-    static Status canWriteRole(Session *session,
-                               meta::cpp2::RoleType targetRole,
-                               GraphSpaceID spaceId,
-                               const std::string& targetUser);
-    static Status canWriteData(Session *session);
+ public:
+  PermissionManager() = delete;
+  static Status canReadSpace(Session *session, GraphSpaceID spaceId);
+  static Status canReadSchemaOrData(Session *session);
+  static Status canWriteSpace(Session *session);
+  static Status canWriteSchema(Session *session);
+  static Status canWriteUser(Session *session);
+  static Status canWriteRole(Session *session, meta::cpp2::RoleType targetRole, GraphSpaceID spaceId,
+                             const std::string &targetUser);
+  static Status canWriteData(Session *session);
 };
 }  // namespace graph
 }  // namespace nebula
 
-#endif   // COMMON_PERMISSION_PERMISSIONMANAGER_H_
+#endif  // COMMON_PERMISSION_PERMISSIONMANAGER_H_

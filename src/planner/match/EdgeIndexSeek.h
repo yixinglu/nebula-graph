@@ -12,8 +12,7 @@ namespace graph {
 /*
  * The EdgeIndexSeek was designed to find if could get the starting vids by edge index.
  */
-class EdgeIndexSeek final {
-};
-}
+class EdgeIndexSeek final {};
+}  // namespace graph
 }  // namespace nebula
 #endif  // PLANNER_MATCH_EDGEINDEXSCAN_H_

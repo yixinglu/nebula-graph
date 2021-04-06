@@ -18,55 +18,55 @@ namespace nebula {
 namespace graph {
 
 folly::Future<Status> AggregateExecutor::execute() {
-    SCOPED_TIMER(&execTime_);
-    auto* agg = asNode<Aggregate>(node());
-    auto groupKeys = agg->groupKeys();
-    auto groupItems = agg->groupItems();
-    auto iter = ectx_->getResult(agg->inputVar()).iter();
-    DCHECK(!!iter);
-    QueryExpressionContext ctx(ectx_);
+  SCOPED_TIMER(&execTime_);
+  auto* agg = asNode<Aggregate>(node());
+  auto groupKeys = agg->groupKeys();
+  auto groupItems = agg->groupItems();
+  auto iter = ectx_->getResult(agg->inputVar()).iter();
+  DCHECK(!!iter);
+  QueryExpressionContext ctx(ectx_);
 
-    std::unordered_map<List, std::vector<std::unique_ptr<AggData>>, std::hash<nebula::List>> result;
-    for (; iter->valid(); iter->next()) {
-        List list;
-        for (auto* key : groupKeys) {
-            list.values.emplace_back(key->eval(ctx(iter.get())));
-        }
-
-        auto it = result.find(list);
-        if (it == result.end()) {
-           std::vector<std::unique_ptr<AggData>> cols;
-           for (size_t i = 0; i < groupItems.size(); ++i) {
-               cols.emplace_back(new AggData());
-           }
-           result.emplace(std::make_pair(list, std::move(cols)));
-        } else {
-            DCHECK_EQ(it->second.size(), groupItems.size());
-        }
-
-        for (size_t i = 0; i < groupItems.size(); ++i) {
-            auto* item = groupItems[i];
-            if (item->kind() == Expression::Kind::kAggregate) {
-                static_cast<AggregateExpression*>(item)->setAggData(result[list][i].get());
-                item->eval(ctx(iter.get()));
-            } else {
-                result[list][i]->setResult(item->eval(ctx(iter.get())));
-            }
-        }
+  std::unordered_map<List, std::vector<std::unique_ptr<AggData>>, std::hash<nebula::List>> result;
+  for (; iter->valid(); iter->next()) {
+    List list;
+    for (auto* key : groupKeys) {
+      list.values.emplace_back(key->eval(ctx(iter.get())));
     }
 
-    DataSet ds;
-    ds.colNames = agg->colNames();
-    ds.rows.reserve(result.size());
-    for (auto& kv : result) {
-        Row row;
-        for (auto& v : kv.second) {
-            row.values.emplace_back(v->result());
-        }
-        ds.rows.emplace_back(std::move(row));
+    auto it = result.find(list);
+    if (it == result.end()) {
+      std::vector<std::unique_ptr<AggData>> cols;
+      for (size_t i = 0; i < groupItems.size(); ++i) {
+        cols.emplace_back(new AggData());
+      }
+      result.emplace(std::make_pair(list, std::move(cols)));
+    } else {
+      DCHECK_EQ(it->second.size(), groupItems.size());
     }
-    return finish(ResultBuilder().value(Value(std::move(ds))).finish());
+
+    for (size_t i = 0; i < groupItems.size(); ++i) {
+      auto* item = groupItems[i];
+      if (item->kind() == Expression::Kind::kAggregate) {
+        static_cast<AggregateExpression*>(item)->setAggData(result[list][i].get());
+        item->eval(ctx(iter.get()));
+      } else {
+        result[list][i]->setResult(item->eval(ctx(iter.get())));
+      }
+    }
+  }
+
+  DataSet ds;
+  ds.colNames = agg->colNames();
+  ds.rows.reserve(result.size());
+  for (auto& kv : result) {
+    Row row;
+    for (auto& v : kv.second) {
+      row.values.emplace_back(v->result());
+    }
+    ds.rows.emplace_back(std::move(row));
+  }
+  return finish(ResultBuilder().value(Value(std::move(ds))).finish());
 }
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula

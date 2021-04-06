@@ -15,68 +15,46 @@ namespace graph {
  * The MatchClausePlanner was designed to generate plan for match clause;
  */
 class MatchClausePlanner final : public CypherClausePlanner {
-public:
-    MatchClausePlanner() = default;
+ public:
+  MatchClausePlanner() = default;
 
-    StatusOr<SubPlan> transform(CypherClauseContextBase* clauseCtx) override;
+  StatusOr<SubPlan> transform(CypherClauseContextBase* clauseCtx) override;
 
-private:
-    Status findStarts(MatchClauseContext* matchClauseCtx,
-                      bool& startFromEdge,
-                      size_t& startIndex,
-                      SubPlan& matchClausePlan);
+ private:
+  Status findStarts(MatchClauseContext* matchClauseCtx, bool& startFromEdge, size_t& startIndex,
+                    SubPlan& matchClausePlan);
 
-    Status expand(const std::vector<NodeInfo>& nodeInfos,
-                  const std::vector<EdgeInfo>& edgeInfos,
-                  MatchClauseContext* matchClauseCtx,
-                  bool startFromEdge,
-                  size_t startIndex,
-                  SubPlan& subplan);
+  Status expand(const std::vector<NodeInfo>& nodeInfos, const std::vector<EdgeInfo>& edgeInfos,
+                MatchClauseContext* matchClauseCtx, bool startFromEdge, size_t startIndex, SubPlan& subplan);
 
-    Status expandFromNode(const std::vector<NodeInfo>& nodeInfos,
-                          const std::vector<EdgeInfo>& edgeInfos,
-                          MatchClauseContext* matchClauseCtx,
-                          size_t startIndex,
-                          SubPlan& subplan);
+  Status expandFromNode(const std::vector<NodeInfo>& nodeInfos, const std::vector<EdgeInfo>& edgeInfos,
+                        MatchClauseContext* matchClauseCtx, size_t startIndex, SubPlan& subplan);
 
-    PlanNode* joinLeftAndRightExpandPart(QueryContext* qctx, PlanNode* left, PlanNode* right);
+  PlanNode* joinLeftAndRightExpandPart(QueryContext* qctx, PlanNode* left, PlanNode* right);
 
-    Status leftExpandFromNode(const std::vector<NodeInfo>& nodeInfos,
-                              const std::vector<EdgeInfo>& edgeInfos,
-                              MatchClauseContext* matchClauseCtx,
-                              size_t startIndex,
-                              std::string inputVar,
-                              SubPlan& subplan);
+  Status leftExpandFromNode(const std::vector<NodeInfo>& nodeInfos, const std::vector<EdgeInfo>& edgeInfos,
+                            MatchClauseContext* matchClauseCtx, size_t startIndex, std::string inputVar,
+                            SubPlan& subplan);
 
-    Status rightExpandFromNode(const std::vector<NodeInfo>& nodeInfos,
-                               const std::vector<EdgeInfo>& edgeInfos,
-                               MatchClauseContext* matchClauseCtx,
-                               size_t startIndex,
-                               SubPlan& subplan);
+  Status rightExpandFromNode(const std::vector<NodeInfo>& nodeInfos, const std::vector<EdgeInfo>& edgeInfos,
+                             MatchClauseContext* matchClauseCtx, size_t startIndex, SubPlan& subplan);
 
-    Status expandFromEdge(const std::vector<NodeInfo>& nodeInfos,
-                          const std::vector<EdgeInfo>& edgeInfos,
-                          MatchClauseContext* matchClauseCtx,
-                          size_t startIndex,
-                          SubPlan& subplan);
+  Status expandFromEdge(const std::vector<NodeInfo>& nodeInfos, const std::vector<EdgeInfo>& edgeInfos,
+                        MatchClauseContext* matchClauseCtx, size_t startIndex, SubPlan& subplan);
 
-    Status projectColumnsBySymbols(MatchClauseContext* matchClauseCtx,
-                                   size_t startIndex,
-                                   SubPlan& plan);
+  Status projectColumnsBySymbols(MatchClauseContext* matchClauseCtx, size_t startIndex, SubPlan& plan);
 
-    YieldColumn* buildVertexColumn(const std::string& colName, const std::string& alias) const;
+  YieldColumn* buildVertexColumn(const std::string& colName, const std::string& alias) const;
 
-    YieldColumn* buildEdgeColumn(const std::string& colName, EdgeInfo& edge) const;
+  YieldColumn* buildEdgeColumn(const std::string& colName, EdgeInfo& edge) const;
 
-    YieldColumn* buildPathColumn(const std::string& alias,
-                                 size_t startIndex,
-                                 const std::vector<std::string> colNames,
-                                 size_t nodeInfoSize) const;
+  YieldColumn* buildPathColumn(const std::string& alias, size_t startIndex, const std::vector<std::string> colNames,
+                               size_t nodeInfoSize) const;
 
-    Status appendFilterPlan(MatchClauseContext* matchClauseCtx, SubPlan& subplan);
+  Status appendFilterPlan(MatchClauseContext* matchClauseCtx, SubPlan& subplan);
 
-private:
-    std::unique_ptr<Expression> initialExpr_;
+ private:
+  std::unique_ptr<Expression> initialExpr_;
 };
 }  // namespace graph
 }  // namespace nebula

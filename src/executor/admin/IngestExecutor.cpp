@@ -5,25 +5,24 @@
  */
 
 #include "executor/admin/IngestExecutor.h"
-#include "planner/Admin.h"
+
 #include "context/QueryContext.h"
+#include "planner/Admin.h"
 
 namespace nebula {
 namespace graph {
 
 folly::Future<Status> IngestExecutor::execute() {
-    auto spaceId = qctx()->rctx()->session()->space().id;
-    return qctx()->getMetaClient()->ingest(spaceId)
-        .via(runner())
-        .thenValue([this](StatusOr<bool> resp) {
-            SCOPED_TIMER(&execTime_);
-            NG_RETURN_IF_ERROR(resp);
-            if (!resp.value()) {
-                return Status::Error("Ingest failed!");
-            }
-            return Status::OK();
-        });
+  auto spaceId = qctx()->rctx()->session()->space().id;
+  return qctx()->getMetaClient()->ingest(spaceId).via(runner()).thenValue([this](StatusOr<bool> resp) {
+    SCOPED_TIMER(&execTime_);
+    NG_RETURN_IF_ERROR(resp);
+    if (!resp.value()) {
+      return Status::Error("Ingest failed!");
+    }
+    return Status::OK();
+  });
 }
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula

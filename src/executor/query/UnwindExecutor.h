@@ -13,17 +13,16 @@ namespace nebula {
 namespace graph {
 
 class UnwindExecutor final : public Executor {
-public:
-    UnwindExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("UnwindExecutor", node, qctx) {}
+ public:
+  UnwindExecutor(const PlanNode *node, QueryContext *qctx) : Executor("UnwindExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 
-private:
-    std::vector<Value> extractList(Value &val);
+ private:
+  std::vector<Value> extractList(Value &val);
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_QUERY_UNWINDEXECUTOR_H_
+#endif  // EXECUTOR_QUERY_UNWINDEXECUTOR_H_

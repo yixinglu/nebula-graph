@@ -11,8 +11,8 @@
 
 #include "common/base/Status.h"
 #include "planner/Query.h"
-#include "validator/Validator.h"
 #include "validator/GroupByValidator.h"
+#include "validator/Validator.h"
 
 namespace nebula {
 
@@ -28,32 +28,32 @@ namespace graph {
 class QueryContext;
 
 class YieldValidator final : public Validator {
-public:
-    YieldValidator(Sentence *sentence, QueryContext *qctx);
+ public:
+  YieldValidator(Sentence *sentence, QueryContext *qctx);
 
-    Status validateImpl() override;
+  Status validateImpl() override;
 
-    Status toPlan() override;
+  Status toPlan() override;
 
-private:
-    Status validateYieldAndBuildOutputs(const YieldClause *clause);
-    Status validateWhere(const WhereClause *clause);
-    Status makeOutputColumn(YieldColumn *column);
-    Status makeImplicitGroupByValidator();
-    Status validateImplicitGroupBy();
-    void genConstantExprValues();
+ private:
+  Status validateYieldAndBuildOutputs(const YieldClause *clause);
+  Status validateWhere(const WhereClause *clause);
+  Status makeOutputColumn(YieldColumn *column);
+  Status makeImplicitGroupByValidator();
+  Status validateImplicitGroupBy();
+  void genConstantExprValues();
 
-private:
-    YieldColumns *columns_{nullptr};
-    std::vector<std::string> outputColumnNames_;
-    std::string constantExprVar_;
-    std::string userDefinedVarName_;
-    Expression *filterCondition_{nullptr};
-    // validate for agg
-    std::unique_ptr<GroupByValidator> groupByValidator_{nullptr};
+ private:
+  YieldColumns *columns_{nullptr};
+  std::vector<std::string> outputColumnNames_;
+  std::string constantExprVar_;
+  std::string userDefinedVarName_;
+  Expression *filterCondition_{nullptr};
+  // validate for agg
+  std::unique_ptr<GroupByValidator> groupByValidator_{nullptr};
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // VALIDATOR_YIELDVALIDATOR_H_
+#endif  // VALIDATOR_YIELDVALIDATOR_H_

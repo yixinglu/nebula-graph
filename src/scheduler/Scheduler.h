@@ -7,14 +7,14 @@
 #ifndef SCHEDULER_SCHEDULER_H_
 #define SCHEDULER_SCHEDULER_H_
 
+#include <folly/SpinLock.h>
+#include <folly/futures/Future.h>
+#include <folly/futures/SharedPromise.h>
+
 #include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
-
-#include <folly/SpinLock.h>
-#include <folly/futures/Future.h>
-#include <folly/futures/SharedPromise.h>
 
 #include "common/base/Status.h"
 #include "common/cpp/helpers.h"
@@ -27,60 +27,58 @@ class QueryContext;
 class LoopExecutor;
 
 class Scheduler final : private cpp::NonCopyable, private cpp::NonMovable {
-public:
-    // check whether a task is a Scheduler::Task by std::is_base_of<>::value in thread pool
-    struct Task {
-        int64_t planId;
-        explicit Task(const Executor *e);
-    };
+ public:
+  // check whether a task is a Scheduler::Task by std::is_base_of<>::value in thread pool
+  struct Task {
+    int64_t planId;
+    explicit Task(const Executor *e);
+  };
 
-    explicit Scheduler(QueryContext *qctx);
-    ~Scheduler() = default;
+  explicit Scheduler(QueryContext *qctx);
+  ~Scheduler() = default;
 
-    folly::Future<Status> schedule();
+  folly::Future<Status> schedule();
 
-private:
-    // Enable thread pool check the query plan id of each callback registered in future. The functor
-    // is only the proxy of the invocable function `fn'.
-    template <typename F>
-    struct ExecTask : Task {
-        using Extract = folly::futures::detail::Extract<F>;
-        using Return = typename Extract::Return;
-        using FirstArg = typename Extract::FirstArg;
+ private:
+  // Enable thread pool check the query plan id of each callback registered in future. The functor
+  // is only the proxy of the invocable function `fn'.
+  template <typename F>
+  struct ExecTask : Task {
+    using Extract = folly::futures::detail::Extract<F>;
+    using Return = typename Extract::Return;
+    using FirstArg = typename Extract::FirstArg;
 
-        F fn;
+    F fn;
 
-        ExecTask(const Executor *e, F f) : Task(e), fn(std::move(f)) {}
+    ExecTask(const Executor *e, F f) : Task(e), fn(std::move(f)) {}
 
-        Return operator()(FirstArg &&arg) {
-            return fn(std::forward<FirstArg>(arg));
-        }
-    };
+    Return operator()(FirstArg &&arg) { return fn(std::forward<FirstArg>(arg)); }
+  };
 
-    template <typename Fn>
-    ExecTask<Fn> task(Executor *e, Fn &&f) const {
-        return ExecTask<Fn>(e, std::forward<Fn>(f));
-    }
+  template <typename Fn>
+  ExecTask<Fn> task(Executor *e, Fn &&f) const {
+    return ExecTask<Fn>(e, std::forward<Fn>(f));
+  }
 
-    void analyze(Executor *executor);
-    folly::Future<Status> doSchedule(Executor *executor);
-    folly::Future<Status> doScheduleParallel(const std::set<Executor *> &dependents);
-    folly::Future<Status> iterate(LoopExecutor *loop);
-    folly::Future<Status> execute(Executor *executor);
+  void analyze(Executor *executor);
+  folly::Future<Status> doSchedule(Executor *executor);
+  folly::Future<Status> doScheduleParallel(const std::set<Executor *> &dependents);
+  folly::Future<Status> iterate(LoopExecutor *loop);
+  folly::Future<Status> execute(Executor *executor);
 
-    struct PassThroughData {
-        folly::SpinLock lock;
-        std::unique_ptr<folly::SharedPromise<Status>> promise;
-        int32_t numOutputs;
+  struct PassThroughData {
+    folly::SpinLock lock;
+    std::unique_ptr<folly::SharedPromise<Status>> promise;
+    int32_t numOutputs;
 
-        explicit PassThroughData(int32_t outputs);
-    };
+    explicit PassThroughData(int32_t outputs);
+  };
 
-    QueryContext *qctx_{nullptr};
-    std::unordered_map<int64_t, PassThroughData> passThroughPromiseMap_;
+  QueryContext *qctx_{nullptr};
+  std::unordered_map<int64_t, PassThroughData> passThroughPromiseMap_;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // SCHEDULER_SCHEDULER_H_
+#endif  // SCHEDULER_SCHEDULER_H_

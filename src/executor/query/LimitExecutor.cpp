@@ -5,6 +5,7 @@
  */
 
 #include "executor/query/LimitExecutor.h"
+
 #include "planner/Query.h"
 #include "util/ScopedTimer.h"
 
@@ -12,27 +13,26 @@ namespace nebula {
 namespace graph {
 
 folly::Future<Status> LimitExecutor::execute() {
-    SCOPED_TIMER(&execTime_);
+  SCOPED_TIMER(&execTime_);
 
-    auto* limit = asNode<Limit>(node());
-    auto iter = ectx_->getResult(limit->inputVar()).iter();
-    ResultBuilder builder;
-    builder.value(iter->valuePtr());
-    auto offset = limit->offset();
-    auto count = limit->count();
-    auto size = iter->size();
-    if (size <= static_cast<size_t>(offset)) {
-        iter->clear();
-    } else if (size > static_cast<size_t>(offset + count)) {
-        iter->eraseRange(0, offset);
-        iter->eraseRange(count, size - offset);
-    } else if (size > static_cast<size_t>(offset) &&
-               size <= static_cast<size_t>(offset + count)) {
-        iter->eraseRange(0, offset);
-    }
-    builder.iter(std::move(iter));
-    return finish(builder.finish());
+  auto* limit = asNode<Limit>(node());
+  auto iter = ectx_->getResult(limit->inputVar()).iter();
+  ResultBuilder builder;
+  builder.value(iter->valuePtr());
+  auto offset = limit->offset();
+  auto count = limit->count();
+  auto size = iter->size();
+  if (size <= static_cast<size_t>(offset)) {
+    iter->clear();
+  } else if (size > static_cast<size_t>(offset + count)) {
+    iter->eraseRange(0, offset);
+    iter->eraseRange(count, size - offset);
+  } else if (size > static_cast<size_t>(offset) && size <= static_cast<size_t>(offset + count)) {
+    iter->eraseRange(0, offset);
+  }
+  builder.iter(std::move(iter));
+  return finish(builder.finish());
 }
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula

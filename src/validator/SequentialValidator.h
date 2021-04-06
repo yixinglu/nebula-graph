@@ -15,40 +15,35 @@ namespace nebula {
 namespace graph {
 
 struct SequentialAstContext final : AstContext {
-    std::vector<std::unique_ptr<Validator>>     validators;
-    PlanNode                                    *startNode;
+  std::vector<std::unique_ptr<Validator>> validators;
+  PlanNode* startNode;
 };
 
 /**
  * A SequentialValidator is the entrance of validators.
  */
 class SequentialValidator final : public Validator {
-public:
-    SequentialValidator(Sentence* sentence, QueryContext* context)
-        : Validator(sentence, context) {
-        setNoSpaceRequired();
-        seqAstCtx_ = std::make_unique<SequentialAstContext>();
-        seqAstCtx_->sentence = sentence;
-        seqAstCtx_->qctx = context;
-    }
+ public:
+  SequentialValidator(Sentence* sentence, QueryContext* context) : Validator(sentence, context) {
+    setNoSpaceRequired();
+    seqAstCtx_ = std::make_unique<SequentialAstContext>();
+    seqAstCtx_->sentence = sentence;
+    seqAstCtx_->qctx = context;
+  }
 
-    Status validateImpl() override;
+  Status validateImpl() override;
 
-    AstContext* getAstContext() override {
-        return seqAstCtx_.get();
-    }
+  AstContext* getAstContext() override { return seqAstCtx_.get(); }
 
-private:
-    /**
-     * Will not check the space from the beginning of a query.
-     */
-    bool spaceChosen() override {
-        return true;
-    }
+ private:
+  /**
+   * Will not check the space from the beginning of a query.
+   */
+  bool spaceChosen() override { return true; }
 
-    const Sentence* getFirstSentence(const Sentence* sentence) const;
+  const Sentence* getFirstSentence(const Sentence* sentence) const;
 
-    std::unique_ptr<SequentialAstContext>   seqAstCtx_;
+  std::unique_ptr<SequentialAstContext> seqAstCtx_;
 };
 }  // namespace graph
 }  // namespace nebula

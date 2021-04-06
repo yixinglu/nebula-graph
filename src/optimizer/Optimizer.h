@@ -15,7 +15,7 @@ namespace nebula {
 namespace graph {
 class PlanNode;
 class QueryContext;
-}   // namespace graph
+}  // namespace graph
 
 namespace opt {
 
@@ -25,28 +25,24 @@ class OptGroupNode;
 class RuleSet;
 
 class Optimizer final {
-public:
-    explicit Optimizer(std::vector<const RuleSet *> ruleSets);
-    ~Optimizer() = default;
+ public:
+  explicit Optimizer(std::vector<const RuleSet *> ruleSets);
+  ~Optimizer() = default;
 
-    StatusOr<const graph::PlanNode *> findBestPlan(graph::QueryContext *qctx);
+  StatusOr<const graph::PlanNode *> findBestPlan(graph::QueryContext *qctx);
 
-private:
-    StatusOr<OptGroup *> prepare(OptContext *ctx, graph::PlanNode *root);
-    Status doExploration(OptGroup *rootGroup);
+ private:
+  StatusOr<OptGroup *> prepare(OptContext *ctx, graph::PlanNode *root);
+  Status doExploration(OptGroup *rootGroup);
 
-    OptGroup *convertToGroup(OptContext *ctx,
-                             graph::PlanNode *node,
-                             std::unordered_map<int64_t, OptGroup *> *visited);
-    void addBodyToGroupNode(OptContext *ctx,
-                            const graph::PlanNode *node,
-                            OptGroupNode *gnode,
-                            std::unordered_map<int64_t, OptGroup *> *visited);
+  OptGroup *convertToGroup(OptContext *ctx, graph::PlanNode *node, std::unordered_map<int64_t, OptGroup *> *visited);
+  void addBodyToGroupNode(OptContext *ctx, const graph::PlanNode *node, OptGroupNode *gnode,
+                          std::unordered_map<int64_t, OptGroup *> *visited);
 
-    std::vector<const RuleSet *> ruleSets_;
+  std::vector<const RuleSet *> ruleSets_;
 };
 
-}   // namespace opt
-}   // namespace nebula
+}  // namespace opt
+}  // namespace nebula
 
-#endif   // OPTIMIZER_OPTIMIZER_H_
+#endif  // OPTIMIZER_OPTIMIZER_H_

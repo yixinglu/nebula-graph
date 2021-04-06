@@ -9,20 +9,12 @@
 namespace nebula {
 namespace graph {
 
-Session::Session(int64_t id) {
-    id_ = id;
-}
+Session::Session(int64_t id) { id_ = id; }
 
-std::shared_ptr<Session> Session::create(int64_t id) {
-    return std::shared_ptr<Session>(new Session(id));
-}
+std::shared_ptr<Session> Session::create(int64_t id) { return std::shared_ptr<Session>(new Session(id)); }
 
-void Session::charge() {
-    idleDuration_.reset();
-}
+void Session::charge() { idleDuration_.reset(); }
 
-uint64_t Session::idleSeconds() const {
-    return idleDuration_.elapsedInSec();
-}
+uint64_t Session::idleSeconds() const { return idleDuration_.elapsedInSec(); }
 }  // namespace graph
 }  // namespace nebula

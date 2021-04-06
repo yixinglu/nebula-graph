@@ -13,14 +13,13 @@ namespace nebula {
 namespace graph {
 
 class DownloadExecutor final : public Executor {
-public:
-    DownloadExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("DownloadExecutor", node, qctx) {}
+ public:
+  DownloadExecutor(const PlanNode *node, QueryContext *qctx) : Executor("DownloadExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_ADMIN_DOWNLOADEXECUTOR_H_
+#endif  // EXECUTOR_ADMIN_DOWNLOADEXECUTOR_H_

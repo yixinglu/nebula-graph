@@ -16,16 +16,15 @@ namespace nebula {
 namespace graph {
 
 class IndexUtil final {
-public:
-    IndexUtil() = delete;
+ public:
+  IndexUtil() = delete;
 
-    static Status validateColumns(const std::vector<std::string>& fields);
+  static Status validateColumns(const std::vector<std::string> &fields);
 
-    static StatusOr<DataSet> toDescIndex(const meta::cpp2::IndexItem &indexItem);
+  static StatusOr<DataSet> toDescIndex(const meta::cpp2::IndexItem &indexItem);
 
-    static StatusOr<DataSet> toShowCreateIndex(bool isTagIndex,
-                                               const std::string &indexName,
-                                               const meta::cpp2::IndexItem &indexItem);
+  static StatusOr<DataSet> toShowCreateIndex(bool isTagIndex, const std::string &indexName,
+                                             const meta::cpp2::IndexItem &indexItem);
 };
 
 }  // namespace graph

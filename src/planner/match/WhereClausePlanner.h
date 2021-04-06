@@ -15,11 +15,11 @@ namespace graph {
  * The WhereClausePlanner was designed to generate plan for where clause.
  */
 class WhereClausePlanner final : public CypherClausePlanner {
-public:
-    WhereClausePlanner() = default;
+ public:
+  WhereClausePlanner() = default;
 
-    StatusOr<SubPlan> transform(CypherClauseContextBase* clauseCtx) override;
+  StatusOr<SubPlan> transform(CypherClauseContextBase* clauseCtx) override;
 };
-}   // namespace graph
-}   // namespace nebula
-#endif   // PLANNER_MATCH_WHERECLAUSEPLANNER_H_
+}  // namespace graph
+}  // namespace nebula
+#endif  // PLANNER_MATCH_WHERECLAUSEPLANNER_H_

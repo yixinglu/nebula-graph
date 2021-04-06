@@ -16,53 +16,52 @@ namespace nebula {
 namespace graph {
 
 class FetchVerticesValidator final : public Validator {
-public:
-    FetchVerticesValidator(Sentence* sentence, QueryContext* context)
-        : Validator(sentence, context) {}
+ public:
+  FetchVerticesValidator(Sentence* sentence, QueryContext* context) : Validator(sentence, context) {}
 
-private:
-    Status validateImpl() override;
+ private:
+  Status validateImpl() override;
 
-    Status toPlan() override;
+  Status toPlan() override;
 
-    Status check();
+  Status check();
 
-    Status prepareVertices();
+  Status prepareVertices();
 
-    Status preparePropertiesWithYield(const YieldClause *yield);
-    Status preparePropertiesWithoutYield();
-    Status prepareProperties();
+  Status preparePropertiesWithYield(const YieldClause* yield);
+  Status preparePropertiesWithoutYield();
+  Status prepareProperties();
 
-    // TODO(shylock) merge the code
-    std::string buildConstantInput();
-    std::string buildRuntimeInput();
+  // TODO(shylock) merge the code
+  std::string buildConstantInput();
+  std::string buildRuntimeInput();
 
-private:
-    DataSet srcVids_{{kVid}};  // src from constant
-    Expression* srcRef_{nullptr};  // src from runtime
-    Expression* src_{nullptr};  // src in total
-    bool onStar_{false};
-    std::unordered_map<std::string, TagID> tags_;
-    std::map<TagID, std::shared_ptr<const meta::SchemaProviderIf>> tagsSchema_;
-    std::vector<storage::cpp2::VertexProp> props_;
-    std::vector<storage::cpp2::Expr>       exprs_;
-    bool dedup_{false};
-    std::vector<storage::cpp2::OrderBy> orderBy_{};
-    int64_t limit_{std::numeric_limits<int64_t>::max()};
-    std::string filter_{};
-    // valid when yield expression not require storage
-    // So expression like these will be evaluate in Project Executor
-    bool withYield_{false};
-    // outputs
-    std::vector<std::string> gvColNames_;
-    std::vector<std::string> colNames_;
-    // new yield to inject reserved properties for compatible with 1.0
-    YieldColumns* newYieldColumns_{nullptr};
-    // input
-    std::string inputVar_;  // empty when pipe or no input in fact
+ private:
+  DataSet srcVids_{{kVid}};      // src from constant
+  Expression* srcRef_{nullptr};  // src from runtime
+  Expression* src_{nullptr};     // src in total
+  bool onStar_{false};
+  std::unordered_map<std::string, TagID> tags_;
+  std::map<TagID, std::shared_ptr<const meta::SchemaProviderIf>> tagsSchema_;
+  std::vector<storage::cpp2::VertexProp> props_;
+  std::vector<storage::cpp2::Expr> exprs_;
+  bool dedup_{false};
+  std::vector<storage::cpp2::OrderBy> orderBy_{};
+  int64_t limit_{std::numeric_limits<int64_t>::max()};
+  std::string filter_{};
+  // valid when yield expression not require storage
+  // So expression like these will be evaluate in Project Executor
+  bool withYield_{false};
+  // outputs
+  std::vector<std::string> gvColNames_;
+  std::vector<std::string> colNames_;
+  // new yield to inject reserved properties for compatible with 1.0
+  YieldColumns* newYieldColumns_{nullptr};
+  // input
+  std::string inputVar_;  // empty when pipe or no input in fact
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
 #endif  // _VALIDATOR_FETCH_VERTICES_VALIDATOR_H_

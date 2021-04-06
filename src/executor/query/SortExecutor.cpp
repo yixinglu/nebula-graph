@@ -5,6 +5,7 @@
  */
 
 #include "executor/query/SortExecutor.h"
+
 #include "planner/Query.h"
 #include "util/ScopedTimer.h"
 
@@ -12,42 +13,42 @@ namespace nebula {
 namespace graph {
 
 folly::Future<Status> SortExecutor::execute() {
-    SCOPED_TIMER(&execTime_);
+  SCOPED_TIMER(&execTime_);
 
-    auto* sort = asNode<Sort>(node());
-    auto iter = ectx_->getResult(sort->inputVar()).iter();
-    if (UNLIKELY(iter == nullptr)) {
-        return Status::Error("Internal error: nullptr iterator in sort executor");
+  auto *sort = asNode<Sort>(node());
+  auto iter = ectx_->getResult(sort->inputVar()).iter();
+  if (UNLIKELY(iter == nullptr)) {
+    return Status::Error("Internal error: nullptr iterator in sort executor");
+  }
+  if (UNLIKELY(!iter->isSequentialIter())) {
+    std::stringstream ss;
+    ss << "Internal error: Sort executor does not supported " << iter->kind();
+    LOG(ERROR) << ss.str();
+    return Status::Error(ss.str());
+  }
+
+  auto &factors = sort->factors();
+  auto comparator = [&factors](const Row &lhs, const Row &rhs) {
+    for (auto &item : factors) {
+      auto index = item.first;
+      auto orderType = item.second;
+      if (lhs[index] == rhs[index]) {
+        continue;
+      }
+
+      if (orderType == OrderFactor::OrderType::ASCEND) {
+        return lhs[index] < rhs[index];
+      } else if (orderType == OrderFactor::OrderType::DESCEND) {
+        return lhs[index] > rhs[index];
+      }
     }
-    if (UNLIKELY(!iter->isSequentialIter())) {
-        std::stringstream ss;
-        ss << "Internal error: Sort executor does not supported " << iter->kind();
-        LOG(ERROR) << ss.str();
-        return Status::Error(ss.str());
-    }
+    return false;
+  };
 
-    auto &factors = sort->factors();
-    auto comparator = [&factors] (const Row &lhs, const Row &rhs) {
-        for (auto &item : factors) {
-            auto index = item.first;
-            auto orderType = item.second;
-            if (lhs[index] == rhs[index]) {
-                continue;
-            }
-
-            if (orderType == OrderFactor::OrderType::ASCEND) {
-                return lhs[index] < rhs[index];
-            } else if (orderType == OrderFactor::OrderType::DESCEND) {
-                return lhs[index] > rhs[index];
-            }
-        }
-        return false;
-    };
-
-    auto seqIter = static_cast<SequentialIter*>(iter.get());
-    std::sort(seqIter->begin(), seqIter->end(), comparator);
-    return finish(ResultBuilder().value(iter->valuePtr()).iter(std::move(iter)).finish());
+  auto seqIter = static_cast<SequentialIter *>(iter.get());
+  std::sort(seqIter->begin(), seqIter->end(), comparator);
+  return finish(ResultBuilder().value(iter->valuePtr()).iter(std::move(iter)).finish());
 }
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula

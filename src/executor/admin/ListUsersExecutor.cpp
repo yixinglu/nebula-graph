@@ -5,36 +5,35 @@
  */
 
 #include "executor/admin/ListUsersExecutor.h"
-#include "planner/Admin.h"
+
 #include "context/QueryContext.h"
+#include "planner/Admin.h"
 
 namespace nebula {
 namespace graph {
 
 folly::Future<Status> ListUsersExecutor::execute() {
-    SCOPED_TIMER(&execTime_);
-    return listUsers();
+  SCOPED_TIMER(&execTime_);
+  return listUsers();
 }
 
 folly::Future<Status> ListUsersExecutor::listUsers() {
-    return qctx()->getMetaClient()->listUsers()
-        .via(runner())
-        .thenValue([this](StatusOr<std::unordered_map<std::string, std::string>> &&resp) {
-            SCOPED_TIMER(&execTime_);
-            if (!resp.ok()) {
-                return std::move(resp).status();
-            }
-            nebula::DataSet v({"Account"});
-            auto items = std::move(resp).value();
-            for (const auto &item : items) {
-                v.emplace_back(nebula::Row(
-                    {
-                        std::move(item).first,
-                    }));
-            }
-            return finish(std::move(v));
-        });
+  return qctx()->getMetaClient()->listUsers().via(runner()).thenValue(
+      [this](StatusOr<std::unordered_map<std::string, std::string>> &&resp) {
+        SCOPED_TIMER(&execTime_);
+        if (!resp.ok()) {
+          return std::move(resp).status();
+        }
+        nebula::DataSet v({"Account"});
+        auto items = std::move(resp).value();
+        for (const auto &item : items) {
+          v.emplace_back(nebula::Row({
+              std::move(item).first,
+          }));
+        }
+        return finish(std::move(v));
+      });
 }
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula

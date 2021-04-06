@@ -8,42 +8,42 @@
 
 #include "planner/Planner.h"
 #include "planner/SequentialPlanner.h"
-#include "planner/match/MatchPlanner.h"
-#include "planner/match/StartVidFinder.h"
-#include "planner/match/PropIndexSeek.h"
-#include "planner/match/VertexIdSeek.h"
 #include "planner/match/LabelIndexSeek.h"
+#include "planner/match/MatchPlanner.h"
+#include "planner/match/PropIndexSeek.h"
+#include "planner/match/StartVidFinder.h"
+#include "planner/match/VertexIdSeek.h"
 
 namespace nebula {
 namespace graph {
 void PlannersRegister::registPlanners() {
-    registSequential();
-    registMatch();
+  registSequential();
+  registMatch();
 }
 
 void PlannersRegister::registSequential() {
-    auto& planners = Planner::plannersMap()[Sentence::Kind::kSequential];
-    planners.emplace_back(&SequentialPlanner::match, &SequentialPlanner::make);
+  auto& planners = Planner::plannersMap()[Sentence::Kind::kSequential];
+  planners.emplace_back(&SequentialPlanner::match, &SequentialPlanner::make);
 }
 
 void PlannersRegister::registMatch() {
-    auto& planners = Planner::plannersMap()[Sentence::Kind::kMatch];
+  auto& planners = Planner::plannersMap()[Sentence::Kind::kMatch];
 
-    planners.emplace_back(&MatchPlanner::match, &MatchPlanner::make);
+  planners.emplace_back(&MatchPlanner::match, &MatchPlanner::make);
 
-    auto& startVidFinders = StartVidFinder::finders();
+  auto& startVidFinders = StartVidFinder::finders();
 
-    // MATCH(n) WHERE id(n) = value RETURN n
-    startVidFinders.emplace_back(&VertexIdSeek::make);
+  // MATCH(n) WHERE id(n) = value RETURN n
+  startVidFinders.emplace_back(&VertexIdSeek::make);
 
-    // MATCH(n:Tag{prop:value}) RETURN n
-    // MATCH(n:Tag) WHERE n.prop = value RETURN n
-    startVidFinders.emplace_back(&PropIndexSeek::make);
+  // MATCH(n:Tag{prop:value}) RETURN n
+  // MATCH(n:Tag) WHERE n.prop = value RETURN n
+  startVidFinders.emplace_back(&PropIndexSeek::make);
 
-    // seek by tag or edge(index)
-    // MATCH(n: tag) RETURN n
-    // MATCH(s)-[:edge]->(e) RETURN e
-    startVidFinders.emplace_back(&LabelIndexSeek::make);
+  // seek by tag or edge(index)
+  // MATCH(n: tag) RETURN n
+  // MATCH(s)-[:edge]->(e) RETURN e
+  startVidFinders.emplace_back(&LabelIndexSeek::make);
 }
 }  // namespace graph
 }  // namespace nebula

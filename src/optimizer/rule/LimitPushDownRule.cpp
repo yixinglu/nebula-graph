@@ -27,65 +27,57 @@ using nebula::graph::QueryContext;
 namespace nebula {
 namespace opt {
 
-std::unique_ptr<OptRule> LimitPushDownRule::kInstance =
-    std::unique_ptr<LimitPushDownRule>(new LimitPushDownRule());
+std::unique_ptr<OptRule> LimitPushDownRule::kInstance = std::unique_ptr<LimitPushDownRule>(new LimitPushDownRule());
 
-LimitPushDownRule::LimitPushDownRule() {
-    RuleSet::QueryRules().addRule(this);
-}
+LimitPushDownRule::LimitPushDownRule() { RuleSet::QueryRules().addRule(this); }
 
 const Pattern &LimitPushDownRule::pattern() const {
-    static Pattern pattern =
-        Pattern::create(graph::PlanNode::Kind::kLimit,
-                        {Pattern::create(graph::PlanNode::Kind::kProject,
-                                         {Pattern::create(graph::PlanNode::Kind::kGetNeighbors)})});
-    return pattern;
+  static Pattern pattern = Pattern::create(
+      graph::PlanNode::Kind::kLimit,
+      {Pattern::create(graph::PlanNode::Kind::kProject, {Pattern::create(graph::PlanNode::Kind::kGetNeighbors)})});
+  return pattern;
 }
 
-StatusOr<OptRule::TransformResult> LimitPushDownRule::transform(
-    OptContext *ctx,
-    const MatchedResult &matched) const {
-    auto limitGroupNode = matched.node;
-    auto projGroupNode = matched.dependencies.front().node;
-    auto gnGroupNode = matched.dependencies.front().dependencies.front().node;
+StatusOr<OptRule::TransformResult> LimitPushDownRule::transform(OptContext *ctx, const MatchedResult &matched) const {
+  auto limitGroupNode = matched.node;
+  auto projGroupNode = matched.dependencies.front().node;
+  auto gnGroupNode = matched.dependencies.front().dependencies.front().node;
 
-    const auto limit = static_cast<const Limit *>(limitGroupNode->node());
-    const auto proj = static_cast<const Project *>(projGroupNode->node());
-    const auto gn = static_cast<const GetNeighbors *>(gnGroupNode->node());
+  const auto limit = static_cast<const Limit *>(limitGroupNode->node());
+  const auto proj = static_cast<const Project *>(projGroupNode->node());
+  const auto gn = static_cast<const GetNeighbors *>(gnGroupNode->node());
 
-    int64_t limitRows = limit->offset() + limit->count();
-    if (gn->limit() >= 0 && limitRows >= gn->limit()) {
-        return TransformResult::noTransform();
-    }
+  int64_t limitRows = limit->offset() + limit->count();
+  if (gn->limit() >= 0 && limitRows >= gn->limit()) {
+    return TransformResult::noTransform();
+  }
 
-    auto qctx = ctx->qctx();
-    auto newLimit = limit->clone(qctx);
-    auto newLimitGroupNode = OptGroupNode::create(ctx, newLimit, limitGroupNode->group());
+  auto qctx = ctx->qctx();
+  auto newLimit = limit->clone(qctx);
+  auto newLimitGroupNode = OptGroupNode::create(ctx, newLimit, limitGroupNode->group());
 
-    auto newProj = proj->clone(qctx);
-    auto newProjGroup = OptGroup::create(ctx);
-    auto newProjGroupNode = newProjGroup->makeGroupNode(newProj);
+  auto newProj = proj->clone(qctx);
+  auto newProjGroup = OptGroup::create(ctx);
+  auto newProjGroupNode = newProjGroup->makeGroupNode(newProj);
 
-    auto newGn = gn->clone(qctx);
-    newGn->setLimit(limitRows);
-    auto newGnGroup = OptGroup::create(ctx);
-    auto newGnGroupNode = newGnGroup->makeGroupNode(newGn);
+  auto newGn = gn->clone(qctx);
+  newGn->setLimit(limitRows);
+  auto newGnGroup = OptGroup::create(ctx);
+  auto newGnGroupNode = newGnGroup->makeGroupNode(newGn);
 
-    newLimitGroupNode->dependsOn(newProjGroup);
-    newProjGroupNode->dependsOn(newGnGroup);
-    for (auto dep : gnGroupNode->dependencies()) {
-        newGnGroupNode->dependsOn(dep);
-    }
+  newLimitGroupNode->dependsOn(newProjGroup);
+  newProjGroupNode->dependsOn(newGnGroup);
+  for (auto dep : gnGroupNode->dependencies()) {
+    newGnGroupNode->dependsOn(dep);
+  }
 
-    TransformResult result;
-    result.eraseAll = true;
-    result.newGroupNodes.emplace_back(newLimitGroupNode);
-    return result;
+  TransformResult result;
+  result.eraseAll = true;
+  result.newGroupNodes.emplace_back(newLimitGroupNode);
+  return result;
 }
 
-std::string LimitPushDownRule::toString() const {
-    return "LimitPushDownRule";
-}
+std::string LimitPushDownRule::toString() const { return "LimitPushDownRule"; }
 
-}   // namespace opt
-}   // namespace nebula
+}  // namespace opt
+}  // namespace nebula

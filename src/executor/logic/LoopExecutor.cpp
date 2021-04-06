@@ -19,21 +19,20 @@ using folly::stringPrintf;
 namespace nebula {
 namespace graph {
 
-LoopExecutor::LoopExecutor(const PlanNode *node, QueryContext *qctx)
-    : Executor("LoopExecutor", node, qctx) {}
+LoopExecutor::LoopExecutor(const PlanNode *node, QueryContext *qctx) : Executor("LoopExecutor", node, qctx) {}
 
 folly::Future<Status> LoopExecutor::execute() {
-    SCOPED_TIMER(&execTime_);
+  SCOPED_TIMER(&execTime_);
 
-    auto *loopNode = asNode<Loop>(node());
-    Expression *expr = loopNode->condition();
-    QueryExpressionContext ctx(ectx_);
+  auto *loopNode = asNode<Loop>(node());
+  Expression *expr = loopNode->condition();
+  QueryExpressionContext ctx(ectx_);
 
-    auto value = expr->eval(ctx);
-    VLOG(1) << "Loop condition: " << expr->toString() << " val: " << value;
-    DCHECK(value.isBool());
-    return finish(ResultBuilder().value(std::move(value)).iter(Iterator::Kind::kDefault).finish());
+  auto value = expr->eval(ctx);
+  VLOG(1) << "Loop condition: " << expr->toString() << " val: " << value;
+  DCHECK(value.isBool());
+  return finish(ResultBuilder().value(std::move(value)).iter(Iterator::Kind::kDefault).finish());
 }
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula

@@ -15,20 +15,16 @@ namespace nebula {
 namespace graph {
 
 class ExecutionError final : public std::runtime_error {
-public:
-    explicit ExecutionError(Status status) : std::runtime_error(status.toString()) {
-        status_ = std::move(status);
-    }
+ public:
+  explicit ExecutionError(Status status) : std::runtime_error(status.toString()) { status_ = std::move(status); }
 
-    Status status() const {
-        return status_;
-    }
+  Status status() const { return status_; }
 
-private:
-    Status status_;
+ private:
+  Status status_;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_EXECUTIONERROR_H_
+#endif  // EXECUTOR_EXECUTIONERROR_H_

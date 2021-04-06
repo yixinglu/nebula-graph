@@ -9,17 +9,18 @@
 
 #include "common/base/Base.h"
 #include "common/cpp/helpers.h"
-#include "service/RequestContext.h"
 #include "common/interface/gen-cpp2/GraphService.h"
-#include "common/meta/SchemaManager.h"
 #include "common/meta/IndexManager.h"
+#include "common/meta/SchemaManager.h"
+#include "service/RequestContext.h"
 // #include "common/meta/ClientBasedGflagsManager.h"
+#include <folly/executors/IOThreadPoolExecutor.h>
+
+#include "common/charset/Charset.h"
 #include "common/clients/meta/MetaClient.h"
 #include "common/clients/storage/GraphStorageClient.h"
 #include "common/network/NetworkUtils.h"
-#include "common/charset/Charset.h"
 #include "optimizer/Optimizer.h"
-#include <folly/executors/IOThreadPoolExecutor.h>
 
 /**
  * QueryEngine is responsible to create and manage ExecutionPlan.
@@ -31,30 +32,28 @@ namespace nebula {
 namespace graph {
 
 class QueryEngine final : public cpp::NonCopyable, public cpp::NonMovable {
-public:
-    QueryEngine() = default;
-    ~QueryEngine() = default;
+ public:
+  QueryEngine() = default;
+  ~QueryEngine() = default;
 
-    Status init(std::shared_ptr<folly::IOThreadPoolExecutor> ioExecutor);
+  Status init(std::shared_ptr<folly::IOThreadPoolExecutor> ioExecutor);
 
-    using RequestContextPtr = std::unique_ptr<RequestContext<ExecutionResponse>>;
-    void execute(RequestContextPtr rctx);
+  using RequestContextPtr = std::unique_ptr<RequestContext<ExecutionResponse>>;
+  void execute(RequestContextPtr rctx);
 
-    const meta::MetaClient* metaClient() const {
-        return metaClient_.get();
-    }
+  const meta::MetaClient* metaClient() const { return metaClient_.get(); }
 
-private:
-    std::unique_ptr<meta::SchemaManager>              schemaManager_;
-    std::unique_ptr<meta::IndexManager>               indexManager_;
-    // std::unique_ptr<meta::ClientBasedGflagsManager>   gflagsManager_;
-    std::unique_ptr<storage::GraphStorageClient>      storage_;
-    std::unique_ptr<meta::MetaClient>                 metaClient_;
-    std::unique_ptr<opt::Optimizer>                   optimizer_;
-    CharsetInfo*                                      charsetInfo_{nullptr};
+ private:
+  std::unique_ptr<meta::SchemaManager> schemaManager_;
+  std::unique_ptr<meta::IndexManager> indexManager_;
+  // std::unique_ptr<meta::ClientBasedGflagsManager>   gflagsManager_;
+  std::unique_ptr<storage::GraphStorageClient> storage_;
+  std::unique_ptr<meta::MetaClient> metaClient_;
+  std::unique_ptr<opt::Optimizer> optimizer_;
+  CharsetInfo* charsetInfo_{nullptr};
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
 #endif  // GRAPH_EXECUTION_ENGINE_H_

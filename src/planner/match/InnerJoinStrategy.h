@@ -16,31 +16,28 @@ namespace graph {
  * The InnerJoinStrategy was designed to connect two expand part by an inner join.
  */
 class InnerJoinStrategy final : public SegmentsConnectStrategy {
-public:
-    enum class JoinPos : int8_t {
-        kStart,
-        kEnd
-    };
+ public:
+  enum class JoinPos : int8_t { kStart, kEnd };
 
-    explicit InnerJoinStrategy(QueryContext* qctx) : SegmentsConnectStrategy(qctx) {}
+  explicit InnerJoinStrategy(QueryContext* qctx) : SegmentsConnectStrategy(qctx) {}
 
-    InnerJoinStrategy* leftPos(JoinPos pos) {
-        leftPos_ = pos;
-        return this;
-    }
+  InnerJoinStrategy* leftPos(JoinPos pos) {
+    leftPos_ = pos;
+    return this;
+  }
 
-    InnerJoinStrategy* rightPos(JoinPos pos) {
-        rightPos_ = pos;
-        return this;
-    }
+  InnerJoinStrategy* rightPos(JoinPos pos) {
+    rightPos_ = pos;
+    return this;
+  }
 
-    PlanNode* connect(const PlanNode* left, const PlanNode* right) override;
+  PlanNode* connect(const PlanNode* left, const PlanNode* right) override;
 
-private:
-    PlanNode* joinDataSet(const PlanNode* left, const PlanNode* right);
+ private:
+  PlanNode* joinDataSet(const PlanNode* left, const PlanNode* right);
 
-    JoinPos     leftPos_{JoinPos::kEnd};
-    JoinPos     rightPos_{JoinPos::kStart};
+  JoinPos leftPos_{JoinPos::kEnd};
+  JoinPos rightPos_{JoinPos::kStart};
 };
 }  // namespace graph
 }  // namespace nebula

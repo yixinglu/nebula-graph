@@ -14,45 +14,41 @@ namespace nebula {
 namespace graph {
 
 class ExtractFilterExprVisitor final : public ExprVisitorImpl {
-public:
-    ExtractFilterExprVisitor() = default;
+ public:
+  ExtractFilterExprVisitor() = default;
 
-    bool ok() const override {
-        return canBePushed_;
-    }
+  bool ok() const override { return canBePushed_; }
 
-    std::unique_ptr<Expression> remainedExpr() && {
-        return std::move(remainedExpr_);
-    }
+  std::unique_ptr<Expression> remainedExpr() && { return std::move(remainedExpr_); }
 
-private:
-    using ExprVisitorImpl::visit;
+ private:
+  using ExprVisitorImpl::visit;
 
-    void visit(ConstantExpression *) override;
-    void visit(LabelExpression *) override;
-    void visit(UUIDExpression *) override;
-    void visit(VariableExpression *) override;
-    void visit(VersionedVariableExpression *) override;
-    void visit(TagPropertyExpression *) override;
-    void visit(EdgePropertyExpression *) override;
-    void visit(InputPropertyExpression *) override;
-    void visit(VariablePropertyExpression *) override;
-    void visit(DestPropertyExpression *) override;
-    void visit(SourcePropertyExpression *) override;
-    void visit(EdgeSrcIdExpression *) override;
-    void visit(EdgeTypeExpression *) override;
-    void visit(EdgeRankExpression *) override;
-    void visit(EdgeDstIdExpression *) override;
-    void visit(VertexExpression *) override;
-    void visit(EdgeExpression *) override;
-    void visit(LogicalExpression *) override;
-    void visit(ColumnExpression *) override;
+  void visit(ConstantExpression *) override;
+  void visit(LabelExpression *) override;
+  void visit(UUIDExpression *) override;
+  void visit(VariableExpression *) override;
+  void visit(VersionedVariableExpression *) override;
+  void visit(TagPropertyExpression *) override;
+  void visit(EdgePropertyExpression *) override;
+  void visit(InputPropertyExpression *) override;
+  void visit(VariablePropertyExpression *) override;
+  void visit(DestPropertyExpression *) override;
+  void visit(SourcePropertyExpression *) override;
+  void visit(EdgeSrcIdExpression *) override;
+  void visit(EdgeTypeExpression *) override;
+  void visit(EdgeRankExpression *) override;
+  void visit(EdgeDstIdExpression *) override;
+  void visit(VertexExpression *) override;
+  void visit(EdgeExpression *) override;
+  void visit(LogicalExpression *) override;
+  void visit(ColumnExpression *) override;
 
-    bool canBePushed_{true};
-    std::unique_ptr<Expression> remainedExpr_;
+  bool canBePushed_{true};
+  std::unique_ptr<Expression> remainedExpr_;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // VISITOR_EXTRACTFILTEREXPRVISITOR_H_
+#endif  // VISITOR_EXTRACTFILTEREXPRVISITOR_H_

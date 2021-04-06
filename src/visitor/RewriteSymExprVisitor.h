@@ -18,76 +18,72 @@ class Expression;
 namespace graph {
 
 class RewriteSymExprVisitor final : public ExprVisitor {
-public:
-    RewriteSymExprVisitor(const std::string &sym, bool isEdge);
+ public:
+  RewriteSymExprVisitor(const std::string &sym, bool isEdge);
 
-    bool hasWrongType() const {
-        return hasWrongType_;
-    }
+  bool hasWrongType() const { return hasWrongType_; }
 
-    std::unique_ptr<Expression> expr() && {
-        return std::move(expr_);
-    }
+  std::unique_ptr<Expression> expr() && { return std::move(expr_); }
 
-    void visit(ConstantExpression *expr) override;
-    void visit(UnaryExpression *expr) override;
-    void visit(TypeCastingExpression *expr) override;
-    void visit(LabelExpression *expr) override;
-    void visit(LabelAttributeExpression *expr) override;
-    // binary expression
-    void visit(ArithmeticExpression *expr) override;
-    void visit(RelationalExpression *expr) override;
-    void visit(SubscriptExpression *expr) override;
-    void visit(AttributeExpression *expr) override;
-    void visit(LogicalExpression *expr) override;
-    // function call
-    void visit(FunctionCallExpression *expr) override;
-    void visit(AggregateExpression *expr) override;
-    void visit(UUIDExpression *expr) override;
-    // variable expression
-    void visit(VariableExpression *expr) override;
-    void visit(VersionedVariableExpression *expr) override;
-    // container expression
-    void visit(ListExpression *expr) override;
-    void visit(SetExpression *expr) override;
-    void visit(MapExpression *expr) override;
-    // property Expression
-    void visit(TagPropertyExpression *expr) override;
-    void visit(EdgePropertyExpression *expr) override;
-    void visit(InputPropertyExpression *expr) override;
-    void visit(VariablePropertyExpression *expr) override;
-    void visit(DestPropertyExpression *expr) override;
-    void visit(SourcePropertyExpression *expr) override;
-    void visit(EdgeSrcIdExpression *expr) override;
-    void visit(EdgeTypeExpression *expr) override;
-    void visit(EdgeRankExpression *expr) override;
-    void visit(EdgeDstIdExpression *expr) override;
-    // vertex/edge expression
-    void visit(VertexExpression *expr) override;
-    void visit(EdgeExpression *expr) override;
-    // case expression
-    void visit(CaseExpression *expr) override;
-    // path build expression
-    void visit(PathBuildExpression *expr) override;
-    // column expression
-    void visit(ColumnExpression *expr) override;
-    // predicate expression
-    void visit(PredicateExpression *expr) override;
-    // list comprehension expression
-    void visit(ListComprehensionExpression *expr) override;
-    // reduce expression
-    void visit(ReduceExpression *expr) override;
+  void visit(ConstantExpression *expr) override;
+  void visit(UnaryExpression *expr) override;
+  void visit(TypeCastingExpression *expr) override;
+  void visit(LabelExpression *expr) override;
+  void visit(LabelAttributeExpression *expr) override;
+  // binary expression
+  void visit(ArithmeticExpression *expr) override;
+  void visit(RelationalExpression *expr) override;
+  void visit(SubscriptExpression *expr) override;
+  void visit(AttributeExpression *expr) override;
+  void visit(LogicalExpression *expr) override;
+  // function call
+  void visit(FunctionCallExpression *expr) override;
+  void visit(AggregateExpression *expr) override;
+  void visit(UUIDExpression *expr) override;
+  // variable expression
+  void visit(VariableExpression *expr) override;
+  void visit(VersionedVariableExpression *expr) override;
+  // container expression
+  void visit(ListExpression *expr) override;
+  void visit(SetExpression *expr) override;
+  void visit(MapExpression *expr) override;
+  // property Expression
+  void visit(TagPropertyExpression *expr) override;
+  void visit(EdgePropertyExpression *expr) override;
+  void visit(InputPropertyExpression *expr) override;
+  void visit(VariablePropertyExpression *expr) override;
+  void visit(DestPropertyExpression *expr) override;
+  void visit(SourcePropertyExpression *expr) override;
+  void visit(EdgeSrcIdExpression *expr) override;
+  void visit(EdgeTypeExpression *expr) override;
+  void visit(EdgeRankExpression *expr) override;
+  void visit(EdgeDstIdExpression *expr) override;
+  // vertex/edge expression
+  void visit(VertexExpression *expr) override;
+  void visit(EdgeExpression *expr) override;
+  // case expression
+  void visit(CaseExpression *expr) override;
+  // path build expression
+  void visit(PathBuildExpression *expr) override;
+  // column expression
+  void visit(ColumnExpression *expr) override;
+  // predicate expression
+  void visit(PredicateExpression *expr) override;
+  // list comprehension expression
+  void visit(ListComprehensionExpression *expr) override;
+  // reduce expression
+  void visit(ReduceExpression *expr) override;
 
-private:
-    void visitBinaryExpr(BinaryExpression *expr);
+ private:
+  void visitBinaryExpr(BinaryExpression *expr);
 
-    const std::string &sym_;
-    bool hasWrongType_{false};
-    bool isEdge_{false};
-    std::unique_ptr<Expression> expr_;
+  const std::string &sym_;
+  bool hasWrongType_{false};
+  bool isEdge_{false};
+  std::unique_ptr<Expression> expr_;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // VISITOR_REWRITESYMEXPRVISITOR_H_
+#endif  // VISITOR_REWRITESYMEXPRVISITOR_H_

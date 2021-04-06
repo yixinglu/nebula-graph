@@ -8,48 +8,45 @@
 #define VALIDATOR_GROUPBY_VALIDATOR_H_
 
 #include "common/base/Base.h"
-#include "validator/Validator.h"
 #include "planner/Query.h"
-
+#include "validator/Validator.h"
 
 namespace nebula {
 namespace graph {
 
 class GroupByValidator final : public Validator {
-public:
-    GroupByValidator(Sentence *sentence, QueryContext *context)
-        : Validator(sentence, context) {}
+ public:
+  GroupByValidator(Sentence* sentence, QueryContext* context) : Validator(sentence, context) {}
 
-    Status validateImpl() override;
+  Status validateImpl() override;
 
-    Status toPlan() override;
+  Status toPlan() override;
 
-private:
-    Status validateGroup(const GroupClause *groupClause);
+ private:
+  Status validateGroup(const GroupClause* groupClause);
 
-    Status validateYield(const YieldClause *yieldClause);
+  Status validateYield(const YieldClause* yieldClause);
 
-    Status groupClauseSemanticCheck();
-    Status rewriteInnerAggExpr(YieldColumn* col, bool& rewrited);
-    Status checkAggExpr(AggregateExpression* aggExpr);
+  Status groupClauseSemanticCheck();
+  Status rewriteInnerAggExpr(YieldColumn* col, bool& rewrited);
+  Status checkAggExpr(AggregateExpression* aggExpr);
 
-private:
-    std::vector<Expression*>                         yieldCols_;
+ private:
+  std::vector<Expression*> yieldCols_;
 
-    // key: alias, value: input name
-    std::unordered_map<std::string, YieldColumn*>     aliases_;
+  // key: alias, value: input name
+  std::unordered_map<std::string, YieldColumn*> aliases_;
 
-    bool                                              needGenProject_{false};
-    std::vector<std::string>                          outputColumnNames_;
-    std::vector<std::string>                          projOutputColumnNames_;
+  bool needGenProject_{false};
+  std::vector<std::string> outputColumnNames_;
+  std::vector<std::string> projOutputColumnNames_;
 
-    // used to generate Project node when there is an internally nested aggregateExpression
-    YieldColumns*                                     projCols_;
+  // used to generate Project node when there is an internally nested aggregateExpression
+  YieldColumns* projCols_;
 
-    std::vector<Expression*>                          groupKeys_;
-    std::vector<Expression*>                          groupItems_;
+  std::vector<Expression*> groupKeys_;
+  std::vector<Expression*> groupItems_;
 };
-
 
 }  // namespace graph
 }  // namespace nebula

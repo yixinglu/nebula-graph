@@ -8,23 +8,20 @@
 #define VALIDATOR_DOWNLOADVALIDATOR_H_
 
 #include "common/base/Base.h"
-#include "validator/Validator.h"
 #include "parser/AdminSentences.h"
+#include "validator/Validator.h"
 
 namespace nebula {
 namespace graph {
 
 class DownloadValidator final : public Validator {
-public:
-    DownloadValidator(Sentence* sentence, QueryContext* context)
-        : Validator(sentence, context) {}
+ public:
+  DownloadValidator(Sentence* sentence, QueryContext* context) : Validator(sentence, context) {}
 
-private:
-    Status validateImpl() override {
-        return Status::OK();
-    }
+ private:
+  Status validateImpl() override { return Status::OK(); }
 
-    Status toPlan() override;
+  Status toPlan() override;
 };
 
 }  // namespace graph

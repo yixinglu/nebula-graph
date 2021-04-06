@@ -20,41 +20,40 @@ namespace nebula {
 namespace graph {
 
 class SessionManager final {
-public:
-    SessionManager();
-    ~SessionManager();
+ public:
+  SessionManager();
+  ~SessionManager();
 
-    using SessionPtr = std::shared_ptr<Session>;
-    /**
-     * Find an existing session
-     */
-    StatusOr<SessionPtr> findSession(int64_t id);
-    /**
-     * Create a new session
-     */
-    SessionPtr createSession();
-    /**
-     * Remove a session
-     */
-    SessionPtr removeSession(int64_t id);
+  using SessionPtr = std::shared_ptr<Session>;
+  /**
+   * Find an existing session
+   */
+  StatusOr<SessionPtr> findSession(int64_t id);
+  /**
+   * Create a new session
+   */
+  SessionPtr createSession();
+  /**
+   * Remove a session
+   */
+  SessionPtr removeSession(int64_t id);
 
-private:
-    /**
-     * Generate a non-zero number
-     */
-    int64_t newSessionId();
+ private:
+  /**
+   * Generate a non-zero number
+   */
+  int64_t newSessionId();
 
-    void reclaimExpiredSessions();
+  void reclaimExpiredSessions();
 
-private:
-    std::atomic<int64_t>                        nextId_{0};
-    folly::RWSpinLock                           rwlock_;        // TODO(dutor) writer might starve
-    std::unordered_map<int64_t, SessionPtr>     activeSessions_;
-    std::unique_ptr<thread::GenericWorker>      scavenger_;
+ private:
+  std::atomic<int64_t> nextId_{0};
+  folly::RWSpinLock rwlock_;  // TODO(dutor) writer might starve
+  std::unordered_map<int64_t, SessionPtr> activeSessions_;
+  std::unique_ptr<thread::GenericWorker> scavenger_;
 };
 
-}   // namespace graph
-}   // namespace nebula
-
+}  // namespace graph
+}  // namespace nebula
 
 #endif  // GRAPH_SESSIONMANAGER_H_

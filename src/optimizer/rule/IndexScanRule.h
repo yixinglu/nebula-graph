@@ -7,15 +7,15 @@
 #define OPTIMIZER_INDEXSCANRULE_H_
 
 #include "optimizer/OptRule.h"
-#include "planner/Query.h"
 #include "optimizer/OptimizerUtils.h"
+#include "planner/Query.h"
 
 namespace nebula {
 namespace opt {
 
 using graph::QueryContext;
-using storage::cpp2::IndexQueryContext;
 using storage::cpp2::IndexColumnHint;
+using storage::cpp2::IndexQueryContext;
 using BVO = graph::OptimizerUtils::BoundValueOperator;
 using IndexItem = std::shared_ptr<meta::cpp2::IndexItem>;
 using IndexQueryCtx = std::unique_ptr<std::vector<IndexQueryContext>>;
@@ -23,161 +23,120 @@ using IndexQueryCtx = std::unique_ptr<std::vector<IndexQueryContext>>;
 class OptContext;
 
 class IndexScanRule final : public OptRule {
-    FRIEND_TEST(IndexScanRuleTest, BoundValueTest);
-    FRIEND_TEST(IndexScanRuleTest, IQCtxTest);
-    FRIEND_TEST(IndexScanRuleTest, BoundValueRangeTest);
+  FRIEND_TEST(IndexScanRuleTest, BoundValueTest);
+  FRIEND_TEST(IndexScanRuleTest, IQCtxTest);
+  FRIEND_TEST(IndexScanRuleTest, BoundValueRangeTest);
 
-public:
-    const Pattern& pattern() const override;
+ public:
+  const Pattern& pattern() const override;
 
-    StatusOr<TransformResult> transform(OptContext* ctx,
-                                        const MatchedResult& matched) const override;
+  StatusOr<TransformResult> transform(OptContext* ctx, const MatchedResult& matched) const override;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-private:
-    struct ScanKind {
-        enum class Kind {
-            kUnknown = 0,
-            kMultipleScan,
-            kSingleScan,
-        };
-
-    private:
-        Kind kind_;
-
-    public:
-        ScanKind() {
-            kind_ = Kind::kUnknown;
-        }
-        void setKind(Kind k) {
-            kind_ = k;
-        }
-        Kind getKind() {
-            return kind_;
-        }
-        bool isSingleScan() {
-            return kind_ == Kind::kSingleScan;
-        }
+ private:
+  struct ScanKind {
+    enum class Kind {
+      kUnknown = 0,
+      kMultipleScan,
+      kSingleScan,
     };
 
-    // col_   : index column name
-    // relOP_ : Relational operator , for example c1 > 1 , the relOP_ == kRelGT
-    //                                            1 > c1 , the relOP_ == kRelLT
-    // value_ : Constant value. from ConstantExpression.
-    struct FilterItem {
-        std::string                 col_;
-        RelationalExpression::Kind  relOP_;
-        Value                       value_;
+   private:
+    Kind kind_;
 
-        FilterItem(const std::string& col,
-                   RelationalExpression::Kind relOP,
-                   const Value& value)
-                   : col_(col)
-                   , relOP_(relOP)
-                   , value_(value) {}
-    };
+   public:
+    ScanKind() { kind_ = Kind::kUnknown; }
+    void setKind(Kind k) { kind_ = k; }
+    Kind getKind() { return kind_; }
+    bool isSingleScan() { return kind_ == Kind::kSingleScan; }
+  };
 
-    // FilterItems used for optimal index fetch and index scan context optimize.
-    // for example : where c1 > 1 and c1 < 2 , the FilterItems should be :
-    //               {c1, kRelGT, 1} , {c1, kRelLT, 2}
-    struct FilterItems {
-        std::vector<FilterItem> items;
-        FilterItems() {}
-        explicit FilterItems(const std::vector<FilterItem>& i) {
-            items = i;
-        }
-        void addItem(const std::string& field,
-                      RelationalExpression::Kind kind,
-                      const Value& v) {
-            items.emplace_back(FilterItem(field, kind, v));
-        }
-    };
+  // col_   : index column name
+  // relOP_ : Relational operator , for example c1 > 1 , the relOP_ == kRelGT
+  //                                            1 > c1 , the relOP_ == kRelLT
+  // value_ : Constant value. from ConstantExpression.
+  struct FilterItem {
+    std::string col_;
+    RelationalExpression::Kind relOP_;
+    Value value_;
 
-    static std::unique_ptr<OptRule> kInstance;
+    FilterItem(const std::string& col, RelationalExpression::Kind relOP, const Value& value)
+        : col_(col), relOP_(relOP), value_(value) {}
+  };
 
-    IndexScanRule();
+  // FilterItems used for optimal index fetch and index scan context optimize.
+  // for example : where c1 > 1 and c1 < 2 , the FilterItems should be :
+  //               {c1, kRelGT, 1} , {c1, kRelLT, 2}
+  struct FilterItems {
+    std::vector<FilterItem> items;
+    FilterItems() {}
+    explicit FilterItems(const std::vector<FilterItem>& i) { items = i; }
+    void addItem(const std::string& field, RelationalExpression::Kind kind, const Value& v) {
+      items.emplace_back(FilterItem(field, kind, v));
+    }
+  };
 
-    Status createIndexQueryCtx(IndexQueryCtx &iqctx,
-                               ScanKind kind,
-                               const FilterItems& items,
-                               graph::QueryContext *qctx,
-                               const OptGroupNode *groupNode) const;
+  static std::unique_ptr<OptRule> kInstance;
 
-    Status createIndexQueryCtx(IndexQueryCtx &iqctx,
-                               graph::QueryContext *qctx,
-                               const OptGroupNode *groupNode) const;
+  IndexScanRule();
 
-    Status createSingleIQC(IndexQueryCtx &iqctx,
-                           const FilterItems& items,
-                           graph::QueryContext *qctx,
-                           const OptGroupNode *groupNode) const;
+  Status createIndexQueryCtx(IndexQueryCtx& iqctx, ScanKind kind, const FilterItems& items, graph::QueryContext* qctx,
+                             const OptGroupNode* groupNode) const;
 
-    Status createMultipleIQC(IndexQueryCtx &iqctx,
-                             const FilterItems& items,
-                             graph::QueryContext *qctx,
-                             const OptGroupNode *groupNode) const;
+  Status createIndexQueryCtx(IndexQueryCtx& iqctx, graph::QueryContext* qctx, const OptGroupNode* groupNode) const;
 
-    Status appendIQCtx(const IndexItem& index,
-                       const FilterItems& items,
-                       IndexQueryCtx &iqctx,
-                       const std::string& filter = "") const;
+  Status createSingleIQC(IndexQueryCtx& iqctx, const FilterItems& items, graph::QueryContext* qctx,
+                         const OptGroupNode* groupNode) const;
 
-    Status appendIQCtx(const IndexItem& index,
-                       IndexQueryCtx &iqctx) const;
+  Status createMultipleIQC(IndexQueryCtx& iqctx, const FilterItems& items, graph::QueryContext* qctx,
+                           const OptGroupNode* groupNode) const;
 
-    Status appendColHint(std::vector<IndexColumnHint>& hitns,
-                         const FilterItems& items,
-                         const meta::cpp2::ColumnDef& col) const;
+  Status appendIQCtx(const IndexItem& index, const FilterItems& items, IndexQueryCtx& iqctx,
+                     const std::string& filter = "") const;
 
-    Status boundValue(const FilterItem& item,
-                      const meta::cpp2::ColumnDef& col,
-                      Value& begin, Value& end) const;
+  Status appendIQCtx(const IndexItem& index, IndexQueryCtx& iqctx) const;
 
-    size_t hintCount(const FilterItems& items) const noexcept;
+  Status appendColHint(std::vector<IndexColumnHint>& hitns, const FilterItems& items,
+                       const meta::cpp2::ColumnDef& col) const;
 
-    bool isEdge(const OptGroupNode *groupNode) const;
+  Status boundValue(const FilterItem& item, const meta::cpp2::ColumnDef& col, Value& begin, Value& end) const;
 
-    int32_t schemaId(const OptGroupNode *groupNode) const;
+  size_t hintCount(const FilterItems& items) const noexcept;
 
-    GraphSpaceID spaceId(const OptGroupNode *groupNode) const;
+  bool isEdge(const OptGroupNode* groupNode) const;
 
-    std::unique_ptr<Expression> filterExpr(const OptGroupNode *groupNode) const;
+  int32_t schemaId(const OptGroupNode* groupNode) const;
 
-    Status analyzeExpression(Expression* expr, FilterItems* items,
-                             ScanKind* kind, bool isEdge) const;
+  GraphSpaceID spaceId(const OptGroupNode* groupNode) const;
 
-    template <typename E,
-              typename = std::enable_if_t<std::is_same<E, EdgePropertyExpression>::value ||
-                                          std::is_same<E, TagPropertyExpression>::value>>
-    Status addFilterItem(RelationalExpression* expr, FilterItems* items) const;
+  std::unique_ptr<Expression> filterExpr(const OptGroupNode* groupNode) const;
 
-    Expression::Kind reverseRelationalExprKind(Expression::Kind kind) const;
+  Status analyzeExpression(Expression* expr, FilterItems* items, ScanKind* kind, bool isEdge) const;
 
-    IndexItem findOptimalIndex(graph::QueryContext *qctx,
-                               const OptGroupNode *groupNode,
-                               const FilterItems& items) const;
+  template <typename E, typename = std::enable_if_t<std::is_same<E, EdgePropertyExpression>::value ||
+                                                    std::is_same<E, TagPropertyExpression>::value>>
+  Status addFilterItem(RelationalExpression* expr, FilterItems* items) const;
 
-    IndexItem findLightestIndex(graph::QueryContext *qctx,
-                                const OptGroupNode *groupNode) const;
+  Expression::Kind reverseRelationalExprKind(Expression::Kind kind) const;
 
-    std::vector<IndexItem>
-    allIndexesBySchema(graph::QueryContext *qctx, const OptGroupNode *groupNode) const;
+  IndexItem findOptimalIndex(graph::QueryContext* qctx, const OptGroupNode* groupNode, const FilterItems& items) const;
 
-    std::vector<IndexItem> findValidIndex(graph::QueryContext *qctx,
-                                          const OptGroupNode *groupNode,
-                                          const FilterItems& items) const;
+  IndexItem findLightestIndex(graph::QueryContext* qctx, const OptGroupNode* groupNode) const;
 
-    std::vector<IndexItem> findIndexForEqualScan(const std::vector<IndexItem>& indexes,
-                                                 const FilterItems& items) const;
+  std::vector<IndexItem> allIndexesBySchema(graph::QueryContext* qctx, const OptGroupNode* groupNode) const;
 
-    std::vector<IndexItem> findIndexForRangeScan(const std::vector<IndexItem>& indexes,
-                                                 const FilterItems& items) const;
+  std::vector<IndexItem> findValidIndex(graph::QueryContext* qctx, const OptGroupNode* groupNode,
+                                        const FilterItems& items) const;
 
-    bool isEmptyResultSet(const OptGroupNode *groupNode) const;
+  std::vector<IndexItem> findIndexForEqualScan(const std::vector<IndexItem>& indexes, const FilterItems& items) const;
+
+  std::vector<IndexItem> findIndexForRangeScan(const std::vector<IndexItem>& indexes, const FilterItems& items) const;
+
+  bool isEmptyResultSet(const OptGroupNode* groupNode) const;
 };
 
-}   // namespace opt
-}   // namespace nebula
+}  // namespace opt
+}  // namespace nebula
 
-#endif   // OPTIMIZER_INDEXSCANRULE_H_
+#endif  // OPTIMIZER_INDEXSCANRULE_H_

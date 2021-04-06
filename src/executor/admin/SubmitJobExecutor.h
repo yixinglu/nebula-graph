@@ -13,14 +13,13 @@ namespace nebula {
 namespace graph {
 
 class SubmitJobExecutor final : public Executor {
-public:
-    SubmitJobExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("SubmitJobExecutor", node, qctx) {}
+ public:
+  SubmitJobExecutor(const PlanNode *node, QueryContext *qctx) : Executor("SubmitJobExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
 #endif  // EXECUTOR_ADMIN_SUBMIT_JOB_EXECUTOR_H_

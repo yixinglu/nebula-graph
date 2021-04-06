@@ -5,6 +5,7 @@
  */
 
 #include "validator/UseValidator.h"
+
 #include "parser/TraverseSentences.h"
 #include "planner/Logic.h"
 #include "planner/Query.h"
@@ -12,38 +13,38 @@
 namespace nebula {
 namespace graph {
 Status UseValidator::validateImpl() {
-    auto useSentence = static_cast<UseSentence*>(sentence_);
-    spaceName_ = useSentence->space();
-    SpaceInfo spaceInfo;
-    spaceInfo.name = *spaceName_;
-    // firstly get from validate context
-    if (!vctx_->hasSpace(*spaceName_)) {
-        // secondly get from cache
-        auto spaceId = qctx_->schemaMng()->toGraphSpaceID(*spaceName_);
-        if (!spaceId.ok()) {
-            LOG(ERROR) << "Unknown space: " << *spaceName_;
-            return spaceId.status();
-        }
-        auto spaceDesc = qctx_->getMetaClient()->getSpaceDesc(spaceId.value());
-        if (!spaceDesc.ok()) {
-            return spaceDesc.status();
-        }
-        spaceInfo.id = spaceId.value();
-        spaceInfo.spaceDesc = std::move(spaceDesc).value();
-        vctx_->switchToSpace(std::move(spaceInfo));
-        return Status::OK();
+  auto useSentence = static_cast<UseSentence*>(sentence_);
+  spaceName_ = useSentence->space();
+  SpaceInfo spaceInfo;
+  spaceInfo.name = *spaceName_;
+  // firstly get from validate context
+  if (!vctx_->hasSpace(*spaceName_)) {
+    // secondly get from cache
+    auto spaceId = qctx_->schemaMng()->toGraphSpaceID(*spaceName_);
+    if (!spaceId.ok()) {
+      LOG(ERROR) << "Unknown space: " << *spaceName_;
+      return spaceId.status();
     }
-
-    spaceInfo.id = -1;
+    auto spaceDesc = qctx_->getMetaClient()->getSpaceDesc(spaceId.value());
+    if (!spaceDesc.ok()) {
+      return spaceDesc.status();
+    }
+    spaceInfo.id = spaceId.value();
+    spaceInfo.spaceDesc = std::move(spaceDesc).value();
     vctx_->switchToSpace(std::move(spaceInfo));
     return Status::OK();
+  }
+
+  spaceInfo.id = -1;
+  vctx_->switchToSpace(std::move(spaceInfo));
+  return Status::OK();
 }
 
 Status UseValidator::toPlan() {
-    auto reg = SwitchSpace::make(qctx_, nullptr, *spaceName_);
-    root_ = reg;
-    tail_ = root_;
-    return Status::OK();
+  auto reg = SwitchSpace::make(qctx_, nullptr, *spaceName_);
+  root_ = reg;
+  tail_ = root_;
+  return Status::OK();
 }
 }  // namespace graph
 }  // namespace nebula

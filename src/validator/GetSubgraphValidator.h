@@ -8,40 +8,38 @@
 #define VALIDATOR_GETSUBGRAPHVALIDATOR_H_
 
 #include "common/base/Base.h"
-#include "validator/TraversalValidator.h"
 #include "parser/Clauses.h"
+#include "validator/TraversalValidator.h"
 
 namespace nebula {
 namespace graph {
 class GetSubgraphValidator final : public TraversalValidator {
-public:
-    GetSubgraphValidator(Sentence* sentence, QueryContext* context)
-        : TraversalValidator(sentence, context) {}
+ public:
+  GetSubgraphValidator(Sentence* sentence, QueryContext* context) : TraversalValidator(sentence, context) {}
 
-private:
-    Status validateImpl() override;
+ private:
+  Status validateImpl() override;
 
-    Status toPlan() override;
+  Status toPlan() override;
 
-    Status validateInBound(InBoundClause* in);
+  Status validateInBound(InBoundClause* in);
 
-    Status validateOutBound(OutBoundClause* out);
+  Status validateOutBound(OutBoundClause* out);
 
-    Status validateBothInOutBound(BothInOutClause* out);
+  Status validateBothInOutBound(BothInOutClause* out);
 
-    StatusOr<GetNeighbors::EdgeProps> buildEdgeProps();
+  StatusOr<GetNeighbors::EdgeProps> buildEdgeProps();
 
-    Status zeroStep(PlanNode* depend, const std::string& inputVar);
+  Status zeroStep(PlanNode* depend, const std::string& inputVar);
 
-    StatusOr<std::vector<storage::cpp2::VertexProp>> buildVertexProp();
+  StatusOr<std::vector<storage::cpp2::VertexProp>> buildVertexProp();
 
-    StatusOr<std::vector<storage::cpp2::EdgeProp>> fillEdgeProp(
-        const std::unordered_set<EdgeType> &edges);
+  StatusOr<std::vector<storage::cpp2::EdgeProp>> fillEdgeProp(const std::unordered_set<EdgeType>& edges);
 
-    StatusOr<std::vector<storage::cpp2::EdgeProp>> buildAllEdgeProp();
+  StatusOr<std::vector<storage::cpp2::EdgeProp>> buildAllEdgeProp();
 
-private:
-    std::unordered_set<EdgeType>                edgeTypes_;
+ private:
+  std::unordered_set<EdgeType> edgeTypes_;
 };
 }  // namespace graph
 }  // namespace nebula

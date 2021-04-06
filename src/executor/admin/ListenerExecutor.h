@@ -13,30 +13,27 @@ namespace nebula {
 namespace graph {
 
 class AddListenerExecutor final : public Executor {
-public:
-    AddListenerExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("AddListenerExecutor", node, qctx) {}
+ public:
+  AddListenerExecutor(const PlanNode *node, QueryContext *qctx) : Executor("AddListenerExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
 class RemoveListenerExecutor final : public Executor {
-public:
-    RemoveListenerExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("RemoveListenerExecutor", node, qctx) {}
+ public:
+  RemoveListenerExecutor(const PlanNode *node, QueryContext *qctx) : Executor("RemoveListenerExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
 class ShowListenerExecutor final : public Executor {
-public:
-    ShowListenerExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("ShowListenerExecutor", node, qctx) {}
+ public:
+  ShowListenerExecutor(const PlanNode *node, QueryContext *qctx) : Executor("ShowListenerExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_ADMIN_LISTENEREXECUTOR_H_
+#endif  // EXECUTOR_ADMIN_LISTENEREXECUTOR_H_

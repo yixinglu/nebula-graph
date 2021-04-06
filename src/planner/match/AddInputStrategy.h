@@ -16,15 +16,14 @@ namespace graph {
  * The AddInputStrategy was designed to connect two subplan by adding dependency.
  */
 class AddInputStrategy final : public SegmentsConnectStrategy {
-public:
-    explicit AddInputStrategy(bool copyColNames)
-        : SegmentsConnectStrategy(nullptr), copyColNames_(copyColNames) {}
+ public:
+  explicit AddInputStrategy(bool copyColNames) : SegmentsConnectStrategy(nullptr), copyColNames_(copyColNames) {}
 
-    PlanNode* connect(const PlanNode* left, const PlanNode* right) override;
+  PlanNode* connect(const PlanNode* left, const PlanNode* right) override;
 
-private:
-    bool copyColNames_{false};
+ private:
+  bool copyColNames_{false};
 };
-}   // namespace graph
-}   // namespace nebula
-#endif   // PLANNER_MATCH_SIMPLECONNECTSTRATEGY_H_
+}  // namespace graph
+}  // namespace nebula
+#endif  // PLANNER_MATCH_SIMPLECONNECTSTRATEGY_H_

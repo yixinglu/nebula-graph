@@ -7,8 +7,8 @@
 #ifndef PLANNER_MATCH_CARTESIANPRODUCTSTRATEGY_H_
 #define PLANNER_MATCH_CARTESIANPRODUCTSTRATEGY_H_
 
-#include "planner/match/SegmentsConnector.h"
 #include "planner/PlanNode.h"
+#include "planner/match/SegmentsConnector.h"
 
 namespace nebula {
 namespace graph {
@@ -18,13 +18,13 @@ namespace graph {
  */
 
 class CartesianProductStrategy final : public SegmentsConnectStrategy {
-public:
-    explicit CartesianProductStrategy(QueryContext* qctx) : SegmentsConnectStrategy(qctx) {}
+ public:
+  explicit CartesianProductStrategy(QueryContext* qctx) : SegmentsConnectStrategy(qctx) {}
 
-    PlanNode* connect(const PlanNode* left, const PlanNode* right) override;
+  PlanNode* connect(const PlanNode* left, const PlanNode* right) override;
 
-private:
-    PlanNode* joinDataSet(const PlanNode* left, const PlanNode* right);
+ private:
+  PlanNode* joinDataSet(const PlanNode* left, const PlanNode* right);
 };
 }  // namespace graph
 }  // namespace nebula

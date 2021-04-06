@@ -15,38 +15,35 @@
 
 namespace folly {
 class IOThreadPoolExecutor;
-}   // namespace folly
+}  // namespace folly
 
 namespace nebula {
 namespace graph {
 
 class GraphService final : public cpp2::GraphServiceSvIf {
-public:
-    GraphService() = default;
-    ~GraphService() = default;
+ public:
+  GraphService() = default;
+  ~GraphService() = default;
 
-    Status MUST_USE_RESULT init(std::shared_ptr<folly::IOThreadPoolExecutor> ioExecutor);
+  Status MUST_USE_RESULT init(std::shared_ptr<folly::IOThreadPoolExecutor> ioExecutor);
 
-    folly::Future<AuthResponse> future_authenticate(
-        const std::string& username,
-        const std::string& password) override;
+  folly::Future<AuthResponse> future_authenticate(const std::string& username, const std::string& password) override;
 
-    void signout(int64_t /*sessionId*/) override;
+  void signout(int64_t /*sessionId*/) override;
 
-    folly::Future<ExecutionResponse>
-    future_execute(int64_t sessionId, const std::string& stmt) override;
+  folly::Future<ExecutionResponse> future_execute(int64_t sessionId, const std::string& stmt) override;
 
-    const char* getErrorStr(ErrorCode result);
+  const char* getErrorStr(ErrorCode result);
 
-private:
-    void onHandle(RequestContext<AuthResponse>& ctx, ErrorCode code);
+ private:
+  void onHandle(RequestContext<AuthResponse>& ctx, ErrorCode code);
 
-    bool auth(const std::string& username, const std::string& password);
+  bool auth(const std::string& username, const std::string& password);
 
-    std::unique_ptr<SessionManager>             sessionManager_;
-    std::unique_ptr<QueryEngine>                queryEngine_;
+  std::unique_ptr<SessionManager> sessionManager_;
+  std::unique_ptr<QueryEngine> queryEngine_;
 };
 
-}   // namespace graph
-}   // namespace nebula
-#endif   // GRAPH_GRAPHSERVICE_H_
+}  // namespace graph
+}  // namespace nebula
+#endif  // GRAPH_GRAPHSERVICE_H_

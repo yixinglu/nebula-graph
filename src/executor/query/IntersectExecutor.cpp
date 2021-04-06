@@ -16,40 +16,40 @@ namespace nebula {
 namespace graph {
 
 folly::Future<Status> IntersectExecutor::execute() {
-    SCOPED_TIMER(&execTime_);
+  SCOPED_TIMER(&execTime_);
 
-    NG_RETURN_IF_ERROR(checkInputDataSets());
+  NG_RETURN_IF_ERROR(checkInputDataSets());
 
-    auto lIter = getLeftInputDataIter();
-    auto rIter = getRightInputDataIter();
+  auto lIter = getLeftInputDataIter();
+  auto rIter = getRightInputDataIter();
 
-    std::unordered_set<const Row *> hashSet;
-    for (; rIter->valid(); rIter->next()) {
-        hashSet.insert(rIter->row());
-        // TODO: should test duplicate rows
-    }
+  std::unordered_set<const Row *> hashSet;
+  for (; rIter->valid(); rIter->next()) {
+    hashSet.insert(rIter->row());
+    // TODO: should test duplicate rows
+  }
 
-    ResultBuilder builder;
-    if (hashSet.empty()) {
-        auto value = lIter->valuePtr();
-        DataSet ds;
-        ds.colNames = value->getDataSet().colNames;
-        builder.value(Value(std::move(ds))).iter(Iterator::Kind::kSequential);
-        return finish(builder.finish());
-    }
-
-    while (lIter->valid()) {
-        auto iter = hashSet.find(lIter->row());
-        if (iter == hashSet.end()) {
-            lIter->unstableErase();
-        } else {
-            lIter->next();
-        }
-    }
-
-    builder.value(lIter->valuePtr()).iter(std::move(lIter));
+  ResultBuilder builder;
+  if (hashSet.empty()) {
+    auto value = lIter->valuePtr();
+    DataSet ds;
+    ds.colNames = value->getDataSet().colNames;
+    builder.value(Value(std::move(ds))).iter(Iterator::Kind::kSequential);
     return finish(builder.finish());
+  }
+
+  while (lIter->valid()) {
+    auto iter = hashSet.find(lIter->row());
+    if (iter == hashSet.end()) {
+      lIter->unstableErase();
+    } else {
+      lIter->next();
+    }
+  }
+
+  builder.value(lIter->valuePtr()).iter(std::move(lIter));
+  return finish(builder.finish());
 }
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula

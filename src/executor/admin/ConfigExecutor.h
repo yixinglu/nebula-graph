@@ -7,54 +7,51 @@
 #ifndef EXECUTOR_ADMIN_CONFIGEXECUTOR_H_
 #define EXECUTOR_ADMIN_CONFIGEXECUTOR_H_
 
-#include "executor/Executor.h"
 #include "common/interface/gen-cpp2/meta_types.h"
+#include "executor/Executor.h"
 
 namespace nebula {
 namespace graph {
 
 class ConfigBaseExecutor : public Executor {
-public:
-    ConfigBaseExecutor(const std::string &name, const PlanNode *node, QueryContext *qctx)
-        : Executor(name, node, qctx) {}
+ public:
+  ConfigBaseExecutor(const std::string &name, const PlanNode *node, QueryContext *qctx) : Executor(name, node, qctx) {}
 
-protected:
-    std::vector<Value> generateColumns(const meta::cpp2::ConfigItem &item);
-    DataSet generateResult(const std::vector<meta::cpp2::ConfigItem> &items);
+ protected:
+  std::vector<Value> generateColumns(const meta::cpp2::ConfigItem &item);
+  DataSet generateResult(const std::vector<meta::cpp2::ConfigItem> &items);
 };
 
 class ShowConfigsExecutor final : public ConfigBaseExecutor {
-public:
-    ShowConfigsExecutor(const PlanNode *node, QueryContext *qctx)
-        : ConfigBaseExecutor("ShowConfigsExecutor", node, qctx) {}
+ public:
+  ShowConfigsExecutor(const PlanNode *node, QueryContext *qctx)
+      : ConfigBaseExecutor("ShowConfigsExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
 class SetConfigExecutor final : public ConfigBaseExecutor {
-public:
-    SetConfigExecutor(const PlanNode *node, QueryContext *qctx)
-        : ConfigBaseExecutor("SetConfigExecutor", node, qctx) {}
+ public:
+  SetConfigExecutor(const PlanNode *node, QueryContext *qctx) : ConfigBaseExecutor("SetConfigExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 
-private:
-    std::string                              name_;
-    Value                                    value_;
+ private:
+  std::string name_;
+  Value value_;
 };
 
 class GetConfigExecutor final : public ConfigBaseExecutor {
-public:
-    GetConfigExecutor(const PlanNode *node, QueryContext *qctx)
-        : ConfigBaseExecutor("GetConfigExecutor", node, qctx) {}
+ public:
+  GetConfigExecutor(const PlanNode *node, QueryContext *qctx) : ConfigBaseExecutor("GetConfigExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 
-private:
-    std::string                              name_;
+ private:
+  std::string name_;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_ADMIN_CONFIGEXECUTOR_H_
+#endif  // EXECUTOR_ADMIN_CONFIGEXECUTOR_H_

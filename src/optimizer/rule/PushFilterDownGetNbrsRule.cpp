@@ -29,78 +29,72 @@ namespace opt {
 std::unique_ptr<OptRule> PushFilterDownGetNbrsRule::kInstance =
     std::unique_ptr<PushFilterDownGetNbrsRule>(new PushFilterDownGetNbrsRule());
 
-PushFilterDownGetNbrsRule::PushFilterDownGetNbrsRule() {
-    RuleSet::QueryRules().addRule(this);
-}
+PushFilterDownGetNbrsRule::PushFilterDownGetNbrsRule() { RuleSet::QueryRules().addRule(this); }
 
 const Pattern &PushFilterDownGetNbrsRule::pattern() const {
-    static Pattern pattern = Pattern::create(
-        graph::PlanNode::Kind::kFilter, {Pattern::create(graph::PlanNode::Kind::kGetNeighbors)});
-    return pattern;
+  static Pattern pattern =
+      Pattern::create(graph::PlanNode::Kind::kFilter, {Pattern::create(graph::PlanNode::Kind::kGetNeighbors)});
+  return pattern;
 }
 
-StatusOr<OptRule::TransformResult> PushFilterDownGetNbrsRule::transform(
-    OptContext *ctx,
-    const MatchedResult &matched) const {
-    auto filterGroupNode = matched.node;
-    auto gnGroupNode = matched.dependencies.front().node;
-    auto filter = static_cast<const Filter *>(filterGroupNode->node());
-    auto gn = static_cast<const GetNeighbors *>(gnGroupNode->node());
+StatusOr<OptRule::TransformResult> PushFilterDownGetNbrsRule::transform(OptContext *ctx,
+                                                                        const MatchedResult &matched) const {
+  auto filterGroupNode = matched.node;
+  auto gnGroupNode = matched.dependencies.front().node;
+  auto filter = static_cast<const Filter *>(filterGroupNode->node());
+  auto gn = static_cast<const GetNeighbors *>(gnGroupNode->node());
 
-    auto condition = filter->condition()->clone();
-    graph::ExtractFilterExprVisitor visitor;
-    condition->accept(&visitor);
-    if (!visitor.ok()) {
-        return TransformResult::noTransform();
-    }
+  auto condition = filter->condition()->clone();
+  graph::ExtractFilterExprVisitor visitor;
+  condition->accept(&visitor);
+  if (!visitor.ok()) {
+    return TransformResult::noTransform();
+  }
 
-    auto qctx = ctx->qctx();
-    auto pool = qctx->objPool();
-    auto remainedExpr = std::move(visitor).remainedExpr();
-    OptGroupNode *newFilterGroupNode = nullptr;
-    if (remainedExpr != nullptr) {
-        auto newFilter = Filter::make(qctx, nullptr, pool->add(remainedExpr.release()));
-        newFilter->setOutputVar(filter->outputVar());
-        newFilter->setInputVar(filter->inputVar());
-        newFilterGroupNode = OptGroupNode::create(ctx, newFilter, filterGroupNode->group());
-    }
+  auto qctx = ctx->qctx();
+  auto pool = qctx->objPool();
+  auto remainedExpr = std::move(visitor).remainedExpr();
+  OptGroupNode *newFilterGroupNode = nullptr;
+  if (remainedExpr != nullptr) {
+    auto newFilter = Filter::make(qctx, nullptr, pool->add(remainedExpr.release()));
+    newFilter->setOutputVar(filter->outputVar());
+    newFilter->setInputVar(filter->inputVar());
+    newFilterGroupNode = OptGroupNode::create(ctx, newFilter, filterGroupNode->group());
+  }
 
-    auto newGNFilter = condition->encode();
-    if (!gn->filter().empty()) {
-        auto filterExpr = Expression::decode(gn->filter());
-        LogicalExpression logicExpr(
-            Expression::Kind::kLogicalAnd, condition.release(), filterExpr.release());
-        newGNFilter = logicExpr.encode();
-    }
+  auto newGNFilter = condition->encode();
+  if (!gn->filter().empty()) {
+    auto filterExpr = Expression::decode(gn->filter());
+    LogicalExpression logicExpr(Expression::Kind::kLogicalAnd, condition.release(), filterExpr.release());
+    newGNFilter = logicExpr.encode();
+  }
 
-    auto newGN = gn->clone(qctx);
-    newGN->setFilter(newGNFilter);
+  auto newGN = gn->clone(qctx);
+  newGN->setFilter(newGNFilter);
 
-    OptGroupNode *newGnGroupNode = nullptr;
-    if (newFilterGroupNode != nullptr) {
-        // Filter(A&&B)<-GetNeighbors(C) => Filter(A)<-GetNeighbors(B&&C)
-        auto newGroup = OptGroup::create(ctx);
-        newGnGroupNode = newGroup->makeGroupNode(newGN);
-        newFilterGroupNode->dependsOn(newGroup);
-    } else {
-        // Filter(A)<-GetNeighbors(C) => GetNeighbors(A&&C)
-        newGnGroupNode = OptGroupNode::create(ctx, newGN, filterGroupNode->group());
-        newGN->setOutputVar(filter->outputVar());
-    }
+  OptGroupNode *newGnGroupNode = nullptr;
+  if (newFilterGroupNode != nullptr) {
+    // Filter(A&&B)<-GetNeighbors(C) => Filter(A)<-GetNeighbors(B&&C)
+    auto newGroup = OptGroup::create(ctx);
+    newGnGroupNode = newGroup->makeGroupNode(newGN);
+    newFilterGroupNode->dependsOn(newGroup);
+  } else {
+    // Filter(A)<-GetNeighbors(C) => GetNeighbors(A&&C)
+    newGnGroupNode = OptGroupNode::create(ctx, newGN, filterGroupNode->group());
+    newGN->setOutputVar(filter->outputVar());
+  }
 
-    for (auto dep : gnGroupNode->dependencies()) {
-        newGnGroupNode->dependsOn(dep);
-    }
+  for (auto dep : gnGroupNode->dependencies()) {
+    newGnGroupNode->dependsOn(dep);
+  }
 
-    TransformResult result;
-    result.eraseCurr = true;
-    result.newGroupNodes.emplace_back(newFilterGroupNode ? newFilterGroupNode : newGnGroupNode);
-    return result;
+  TransformResult result;
+  result.eraseCurr = true;
+  result.newGroupNodes.emplace_back(newFilterGroupNode ? newFilterGroupNode : newGnGroupNode);
+  return result;
 }
 
-std::string PushFilterDownGetNbrsRule::toString() const {
-    return "PushFilterDownGetNbrsRule";
-}
+std::string PushFilterDownGetNbrsRule::toString() const { return "PushFilterDownGetNbrsRule"; }
 
-}   // namespace opt
-}   // namespace nebula
+}  // namespace opt
+}  // namespace nebula

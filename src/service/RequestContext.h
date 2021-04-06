@@ -8,8 +8,8 @@
 #define GRAPH_REQUESTCONTEXT_H_
 
 #include "common/base/Base.h"
-#include "common/interface/gen-cpp2/GraphService.h"
 #include "common/cpp/helpers.h"
+#include "common/interface/gen-cpp2/GraphService.h"
 #include "common/time/Duration.h"
 #include "service/Session.h"
 
@@ -27,69 +27,51 @@ namespace graph {
 
 template <typename Response>
 class RequestContext final : public cpp::NonCopyable, public cpp::NonMovable {
-public:
-    RequestContext() = default;
-    ~RequestContext() {
-        if (session_ != nullptr) {
-            // keep the session active
-            session_->charge();
-        }
+ public:
+  RequestContext() = default;
+  ~RequestContext() {
+    if (session_ != nullptr) {
+      // keep the session active
+      session_->charge();
     }
+  }
 
-    void setQuery(std::string query) {
-        query_ = std::move(query);
+  void setQuery(std::string query) { query_ = std::move(query); }
+
+  const std::string& query() const { return query_; }
+
+  Response& resp() { return resp_; }
+
+  folly::Future<Response> future() { return promise_.getFuture(); }
+
+  void setSession(std::shared_ptr<Session> session) {
+    session_ = std::move(session);
+    if (session_ != nullptr) {
+      // keep the session active
+      session_->charge();
     }
+  }
 
-    const std::string& query() const {
-        return query_;
-    }
+  Session* session() const { return session_.get(); }
 
-    Response& resp() {
-        return resp_;
-    }
+  folly::Executor* runner() const { return runner_; }
 
-    folly::Future<Response> future() {
-        return promise_.getFuture();
-    }
+  void setRunner(folly::Executor* runner) { runner_ = runner; }
 
-    void setSession(std::shared_ptr<Session> session) {
-        session_ = std::move(session);
-        if (session_ != nullptr) {
-            // keep the session active
-            session_->charge();
-        }
-    }
+  const time::Duration& duration() const { return duration_; }
 
-    Session* session() const {
-        return session_.get();
-    }
+  void finish() { promise_.setValue(std::move(resp_)); }
 
-    folly::Executor* runner() const {
-        return runner_;
-    }
-
-    void setRunner(folly::Executor *runner) {
-        runner_ = runner;
-    }
-
-    const time::Duration& duration() const {
-        return duration_;
-    }
-
-    void finish() {
-        promise_.setValue(std::move(resp_));
-    }
-
-private:
-    time::Duration                              duration_;
-    std::string                                 query_;
-    Response                                    resp_;
-    folly::Promise<Response>                    promise_;
-    std::shared_ptr<Session>                    session_;
-    folly::Executor                            *runner_{nullptr};
+ private:
+  time::Duration duration_;
+  std::string query_;
+  Response resp_;
+  folly::Promise<Response> promise_;
+  std::shared_ptr<Session> session_;
+  folly::Executor* runner_{nullptr};
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
 #endif  // GRAPH_REQUESTCONTEXT_H_

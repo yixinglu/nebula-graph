@@ -16,60 +16,56 @@ namespace nebula {
 namespace graph {
 
 class CollectAllExprsVisitor final : public ExprVisitorImpl {
-public:
-    explicit CollectAllExprsVisitor(const std::unordered_set<Expression::Kind>& exprKinds);
-    bool ok() const override {
-        return !exprKinds_.empty();
-    }
+ public:
+  explicit CollectAllExprsVisitor(const std::unordered_set<Expression::Kind>& exprKinds);
+  bool ok() const override { return !exprKinds_.empty(); }
 
-    std::vector<const Expression*> exprs() && {
-        return std::move(exprs_);
-    }
+  std::vector<const Expression*> exprs() && { return std::move(exprs_); }
 
-private:
-    using ExprVisitorImpl::visit;
+ private:
+  using ExprVisitorImpl::visit;
 
-    void visit(TypeCastingExpression* expr) override;
-    void visit(UnaryExpression* expr) override;
-    void visit(FunctionCallExpression* expr) override;
-    void visit(AggregateExpression* expr) override;
-    void visit(ListExpression* expr) override;
-    void visit(SetExpression* expr) override;
-    void visit(MapExpression* expr) override;
+  void visit(TypeCastingExpression* expr) override;
+  void visit(UnaryExpression* expr) override;
+  void visit(FunctionCallExpression* expr) override;
+  void visit(AggregateExpression* expr) override;
+  void visit(ListExpression* expr) override;
+  void visit(SetExpression* expr) override;
+  void visit(MapExpression* expr) override;
 
-    void visit(ConstantExpression* expr) override;
-    void visit(EdgePropertyExpression* expr) override;
-    void visit(TagPropertyExpression* expr) override;
-    void visit(InputPropertyExpression* expr) override;
-    void visit(VariablePropertyExpression* expr) override;
-    void visit(SourcePropertyExpression* expr) override;
-    void visit(DestPropertyExpression* expr) override;
-    void visit(EdgeSrcIdExpression* expr) override;
-    void visit(EdgeTypeExpression* expr) override;
-    void visit(EdgeRankExpression* expr) override;
-    void visit(EdgeDstIdExpression* expr) override;
-    void visit(UUIDExpression* expr) override;
-    void visit(VariableExpression* expr) override;
-    void visit(VersionedVariableExpression* expr) override;
-    void visit(LabelExpression* expr) override;
-    void visit(LabelAttributeExpression* expr) override;
-    void visit(VertexExpression* expr) override;
-    void visit(EdgeExpression* expr) override;
-    void visit(CaseExpression* expr) override;
-    void visit(PredicateExpression* expr) override;
-    void visit(ListComprehensionExpression* expr) override;
-    void visit(ReduceExpression* expr) override;
+  void visit(ConstantExpression* expr) override;
+  void visit(EdgePropertyExpression* expr) override;
+  void visit(TagPropertyExpression* expr) override;
+  void visit(InputPropertyExpression* expr) override;
+  void visit(VariablePropertyExpression* expr) override;
+  void visit(SourcePropertyExpression* expr) override;
+  void visit(DestPropertyExpression* expr) override;
+  void visit(EdgeSrcIdExpression* expr) override;
+  void visit(EdgeTypeExpression* expr) override;
+  void visit(EdgeRankExpression* expr) override;
+  void visit(EdgeDstIdExpression* expr) override;
+  void visit(UUIDExpression* expr) override;
+  void visit(VariableExpression* expr) override;
+  void visit(VersionedVariableExpression* expr) override;
+  void visit(LabelExpression* expr) override;
+  void visit(LabelAttributeExpression* expr) override;
+  void visit(VertexExpression* expr) override;
+  void visit(EdgeExpression* expr) override;
+  void visit(CaseExpression* expr) override;
+  void visit(PredicateExpression* expr) override;
+  void visit(ListComprehensionExpression* expr) override;
+  void visit(ReduceExpression* expr) override;
 
-    void visit(ColumnExpression* expr) override;
+  void visit(ColumnExpression* expr) override;
 
-    void visitBinaryExpr(BinaryExpression* expr) override;
-    void collectExpr(const Expression* expr);
+  void visitBinaryExpr(BinaryExpression* expr) override;
+  void collectExpr(const Expression* expr);
 
-    const std::unordered_set<Expression::Kind>& exprKinds_;
-    std::vector<const Expression*> exprs_;
+  const std::unordered_set<Expression::Kind>& exprKinds_;
+  std::vector<const Expression*> exprs_;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // VISITOR_COLLECTALLEXPRSVISITOR_H_
+#endif  // VISITOR_COLLECTALLEXPRSVISITOR_H_

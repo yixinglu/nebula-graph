@@ -40,4 +40,4 @@ DECLARE_uint32(max_allowed_statements);
 // optimizer
 DECLARE_bool(enable_optimizer);
 
-#endif   // GRAPH_GRAPHFLAGS_H_
+#endif  // GRAPH_GRAPHFLAGS_H_

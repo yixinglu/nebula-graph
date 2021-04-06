@@ -13,14 +13,13 @@ namespace nebula {
 namespace graph {
 
 class IntersectExecutor : public SetExecutor {
-public:
-    IntersectExecutor(const PlanNode *node, QueryContext *qctx)
-        : SetExecutor("IntersectExecutor", node, qctx) {}
+ public:
+  IntersectExecutor(const PlanNode *node, QueryContext *qctx) : SetExecutor("IntersectExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_QUERY_INTERSECTEXECUTOR_H_
+#endif  // EXECUTOR_QUERY_INTERSECTEXECUTOR_H_

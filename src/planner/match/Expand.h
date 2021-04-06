@@ -18,64 +18,52 @@ namespace graph {
  * The Expand was designed to handle the pattern expanding.
  */
 class Expand final {
-public:
-    Expand(MatchClauseContext* matchCtx, std::unique_ptr<Expression> initialExpr)
-        : matchCtx_(matchCtx), initialExpr_(std::move(initialExpr)) {}
+ public:
+  Expand(MatchClauseContext* matchCtx, std::unique_ptr<Expression> initialExpr)
+      : matchCtx_(matchCtx), initialExpr_(std::move(initialExpr)) {}
 
-    Expand* reversely() {
-        reversely_ = true;
-        return this;
-    }
+  Expand* reversely() {
+    reversely_ = true;
+    return this;
+  }
 
-    Expand* depends(PlanNode* dep) {
-        dependency_ = dep;
-        return this;
-    }
+  Expand* depends(PlanNode* dep) {
+    dependency_ = dep;
+    return this;
+  }
 
-    Expand* inputVar(const std::string& inputVar) {
-        inputVar_ = inputVar;
-        return this;
-    }
+  Expand* inputVar(const std::string& inputVar) {
+    inputVar_ = inputVar;
+    return this;
+  }
 
-    Status doExpand(const NodeInfo& node,
-                    const EdgeInfo& edge,
+  Status doExpand(const NodeInfo& node, const EdgeInfo& edge, SubPlan* plan);
+
+ private:
+  Status expandSteps(const NodeInfo& node, const EdgeInfo& edge, SubPlan* plan);
+
+  Status expandStep(const EdgeInfo& edge, PlanNode* dep, const std::string& inputVar, const Expression* nodeFilter,
                     SubPlan* plan);
 
-private:
-    Status expandSteps(const NodeInfo& node,
-                       const EdgeInfo& edge,
-                       SubPlan* plan);
+  Status collectData(const PlanNode* joinLeft, const PlanNode* joinRight, PlanNode** passThrough, SubPlan* plan);
 
-    Status expandStep(const EdgeInfo& edge,
-                      PlanNode* dep,
-                      const std::string& inputVar,
-                      const Expression* nodeFilter,
-                      SubPlan* plan);
+  Status filterDatasetByPathLength(const EdgeInfo& edge, PlanNode* input, SubPlan* plan);
 
-    Status collectData(const PlanNode* joinLeft,
-                       const PlanNode* joinRight,
-                       PlanNode** passThrough,
-                       SubPlan* plan);
+  Expression* buildNStepLoopCondition(int64_t startIndex, int64_t maxHop) const;
 
-    Status filterDatasetByPathLength(const EdgeInfo& edge,
-                                     PlanNode* input,
-                                     SubPlan* plan);
+  template <typename T>
+  T* saveObject(T* obj) const {
+    return matchCtx_->qctx->objPool()->add(obj);
+  }
 
-    Expression* buildNStepLoopCondition(int64_t startIndex, int64_t maxHop) const;
+  std::unique_ptr<std::vector<storage::cpp2::EdgeProp>> genEdgeProps(const EdgeInfo& edge);
 
-    template <typename T>
-    T* saveObject(T* obj) const {
-        return matchCtx_->qctx->objPool()->add(obj);
-    }
-
-    std::unique_ptr<std::vector<storage::cpp2::EdgeProp>> genEdgeProps(const EdgeInfo &edge);
-
-    MatchClauseContext*                 matchCtx_;
-    std::unique_ptr<Expression>         initialExpr_;
-    bool                                reversely_{false};
-    PlanNode*                           dependency_{nullptr};
-    std::string                         inputVar_;
+  MatchClauseContext* matchCtx_;
+  std::unique_ptr<Expression> initialExpr_;
+  bool reversely_{false};
+  PlanNode* dependency_{nullptr};
+  std::string inputVar_;
 };
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 #endif  // PLANNER_MATCH_EXPAND_H_

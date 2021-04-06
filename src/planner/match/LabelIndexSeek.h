@@ -16,36 +16,33 @@ namespace graph {
  * The LabelIndexSeek was designed to find if could get the starting vids by tag index.
  */
 class LabelIndexSeek final : public StartVidFinder {
-public:
-    static std::unique_ptr<LabelIndexSeek> make() {
-        return std::unique_ptr<LabelIndexSeek>(new LabelIndexSeek());
+ public:
+  static std::unique_ptr<LabelIndexSeek> make() { return std::unique_ptr<LabelIndexSeek>(new LabelIndexSeek()); }
+
+ private:
+  LabelIndexSeek() = default;
+
+  bool matchNode(NodeContext* nodeCtx) override;
+
+  bool matchEdge(EdgeContext* edgeCtx) override;
+
+  StatusOr<SubPlan> transformNode(NodeContext* nodeCtx) override;
+
+  StatusOr<SubPlan> transformEdge(EdgeContext* edgeCtx) override;
+
+  static StatusOr<std::vector<IndexID>> pickTagIndex(const NodeContext* nodeCtx);
+
+  static std::shared_ptr<meta::cpp2::IndexItem> selectIndex(const std::shared_ptr<meta::cpp2::IndexItem> candidate,
+                                                            const std::shared_ptr<meta::cpp2::IndexItem> income) {
+    // less fields is better
+    // TODO(shylock) rank for field itself(e.g. INT is better than STRING)
+    if (candidate->get_fields().size() > income->get_fields().size()) {
+      return income;
     }
-
-private:
-    LabelIndexSeek() = default;
-
-    bool matchNode(NodeContext* nodeCtx) override;
-
-    bool matchEdge(EdgeContext* edgeCtx) override;
-
-    StatusOr<SubPlan> transformNode(NodeContext* nodeCtx) override;
-
-    StatusOr<SubPlan> transformEdge(EdgeContext* edgeCtx) override;
-
-    static StatusOr<std::vector<IndexID>> pickTagIndex(const NodeContext* nodeCtx);
-
-    static std::shared_ptr<meta::cpp2::IndexItem> selectIndex(
-        const std::shared_ptr<meta::cpp2::IndexItem> candidate,
-        const std::shared_ptr<meta::cpp2::IndexItem> income) {
-        // less fields is better
-        // TODO(shylock) rank for field itself(e.g. INT is better than STRING)
-        if (candidate->get_fields().size() > income->get_fields().size()) {
-            return income;
-        }
-        return candidate;
-    }
+    return candidate;
+  }
 };
 
-}   // namespace graph
-}   // namespace nebula
-#endif   // PLANNER_MATCH_LABELINDEXSEEK_H_
+}  // namespace graph
+}  // namespace nebula
+#endif  // PLANNER_MATCH_LABELINDEXSEEK_H_

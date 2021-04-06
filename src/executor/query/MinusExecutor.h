@@ -13,14 +13,13 @@ namespace nebula {
 namespace graph {
 
 class MinusExecutor : public SetExecutor {
-public:
-    MinusExecutor(const PlanNode *node, QueryContext *qctx)
-        : SetExecutor("MinusExecutor", node, qctx) {}
+ public:
+  MinusExecutor(const PlanNode *node, QueryContext *qctx) : SetExecutor("MinusExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_QUERY_MINUSEXECUTOR_H_
+#endif  // EXECUTOR_QUERY_MINUSEXECUTOR_H_

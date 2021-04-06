@@ -18,19 +18,18 @@ class Iterator;
 namespace graph {
 
 class SetExecutor : public Executor {
-public:
-    Status checkInputDataSets();
-    std::unique_ptr<Iterator> getLeftInputDataIter() const;
-    std::unique_ptr<Iterator> getRightInputDataIter() const;
+ public:
+  Status checkInputDataSets();
+  std::unique_ptr<Iterator> getLeftInputDataIter() const;
+  std::unique_ptr<Iterator> getRightInputDataIter() const;
 
-protected:
-    SetExecutor(const std::string &name, const PlanNode *node, QueryContext *qctx)
-        : Executor(name, node, qctx) {}
+ protected:
+  SetExecutor(const std::string &name, const PlanNode *node, QueryContext *qctx) : Executor(name, node, qctx) {}
 
-    std::vector<std::string> colNames_;
+  std::vector<std::string> colNames_;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
-#endif   // EXECUTOR_QUERY_SETEXECUTOR_H_
+#endif  // EXECUTOR_QUERY_SETEXECUTOR_H_

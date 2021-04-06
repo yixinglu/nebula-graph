@@ -6,40 +6,39 @@
 #ifndef NEBULA_GRAPH_OPTIMIZER_OPTIMIZERUTILS_H_
 #define NEBULA_GRAPH_OPTIMIZER_OPTIMIZERUTILS_H_
 
+#include <common/interface/gen-cpp2/meta_types.h>
+
 #include "common/base/Base.h"
 #include "util/SchemaUtil.h"
-#include <common/interface/gen-cpp2/meta_types.h>
 
 namespace nebula {
 namespace graph {
 
 class OptimizerUtils {
-public:
-    enum class BoundValueOperator {
-        GREATER_THAN = 0,
-        LESS_THAN,
-        MAX,
-        MIN,
-    };
+ public:
+  enum class BoundValueOperator {
+    GREATER_THAN = 0,
+    LESS_THAN,
+    MAX,
+    MIN,
+  };
 
-public:
-    OptimizerUtils() = delete;
+ public:
+  OptimizerUtils() = delete;
 
-    static Value boundValue(const meta::cpp2::ColumnDef& col,
-                            BoundValueOperator op,
-                            const Value& v = Value());
+  static Value boundValue(const meta::cpp2::ColumnDef& col, BoundValueOperator op, const Value& v = Value());
 
-    static Value boundValueWithGT(const meta::cpp2::ColumnDef& col, const Value& v);
+  static Value boundValueWithGT(const meta::cpp2::ColumnDef& col, const Value& v);
 
-    static Value boundValueWithLT(const meta::cpp2::ColumnDef& col, const Value& v);
+  static Value boundValueWithLT(const meta::cpp2::ColumnDef& col, const Value& v);
 
-    static Value boundValueWithMax(const meta::cpp2::ColumnDef& col);
+  static Value boundValueWithMax(const meta::cpp2::ColumnDef& col);
 
-    static Value boundValueWithMin(const meta::cpp2::ColumnDef& col);
+  static Value boundValueWithMin(const meta::cpp2::ColumnDef& col);
 
-    static Value normalizeValue(const meta::cpp2::ColumnDef& col, const Value& v);
+  static Value normalizeValue(const meta::cpp2::ColumnDef& col, const Value& v);
 
-    static constexpr double kEpsilon = 0.0000000000000001;
+  static constexpr double kEpsilon = 0.0000000000000001;
 };
 
 }  // namespace graph

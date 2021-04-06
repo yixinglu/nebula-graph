@@ -7,24 +7,23 @@
 #ifndef EXECUTOR_ADMIN_RESETBALANCEEXECUTOR_H_
 #define EXECUTOR_ADMIN_RESETBALANCEEXECUTOR_H_
 
-#include "executor/Executor.h"
 #include "context/QueryContext.h"
+#include "executor/Executor.h"
 
 namespace nebula {
 namespace graph {
 
 class ResetBalanceExecutor final : public Executor {
-public:
-    ResetBalanceExecutor(const PlanNode *node, QueryContext *qctx)
-        : Executor("ResetBalanceExecutor", node, qctx) {}
+ public:
+  ResetBalanceExecutor(const PlanNode *node, QueryContext *qctx) : Executor("ResetBalanceExecutor", node, qctx) {}
 
-    folly::Future<Status> execute() override;
+  folly::Future<Status> execute() override;
 
-private:
-    folly::Future<Status> resetBalance();
+ private:
+  folly::Future<Status> resetBalance();
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
 #endif  // EXECUTOR_ADMIN_RESETBALANCEEXECUTOR_H_

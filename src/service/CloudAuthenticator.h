@@ -15,16 +15,16 @@ namespace nebula {
 namespace graph {
 
 class CloudAuthenticator final : public Authenticator {
-public:
-    explicit CloudAuthenticator(const meta::MetaClient* client);
+ public:
+  explicit CloudAuthenticator(const meta::MetaClient* client);
 
-    bool auth(const std::string& user, const std::string& password) override;
+  bool auth(const std::string& user, const std::string& password) override;
 
-private:
-    const meta::MetaClient*               metaClient_;
+ private:
+  const meta::MetaClient* metaClient_;
 };
 
-}   // namespace graph
-}   // namespace nebula
+}  // namespace graph
+}  // namespace nebula
 
 #endif  // GRAPH_CLOUDAUTHENTICATOR_H_
