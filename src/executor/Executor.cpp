@@ -89,6 +89,7 @@
 #include "planner/Query.h"
 #include "common/base/ObjectPool.h"
 #include "util/ScopedTimer.h"
+#include "service/GraphFlags.h"
 
 using folly::stringPrintf;
 
@@ -517,6 +518,16 @@ Executor::Executor(const std::string &name, const PlanNode *node, QueryContext *
 Executor::~Executor() {}
 
 Status Executor::open() {
+    auto status = MemInfo::make();
+    NG_RETURN_IF_ERROR(status);
+    auto mem = std::move(status).value();
+    if (mem->hitsHighWatermark(FLAGS_system_memory_high_watermark_ratio)) {
+        return Status::Error(
+            "Used memory(%ldKB) hits the high watermark(%lf) of total system memory(%ldKB).",
+            mem->usedInKB(),
+            FLAGS_system_memory_high_watermark_ratio,
+            mem->totalInKB());
+    }
     numRows_ = 0;
     execTime_ = 0;
     totalDuration_.reset();

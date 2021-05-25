@@ -72,3 +72,7 @@
 ########## Authentication ##########
 # User login authentication type, password for nebula authentication, ldap for ldap authentication, cloud for cloud authentication
 --auth_type=password
+
+########## memory ##########
+# System memory high watermark ratio
+--system_memory_high_watermark_ratio=0.8
