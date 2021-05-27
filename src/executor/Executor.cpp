@@ -88,6 +88,7 @@
 #include "planner/PlanNode.h"
 #include "planner/Query.h"
 #include "common/base/ObjectPool.h"
+#include "common/base/Memory.h"
 #include "util/ScopedTimer.h"
 #include "service/GraphFlags.h"
 

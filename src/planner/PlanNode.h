@@ -41,7 +41,6 @@ public:
         kTopN,
         kLimit,
         kAggregate,
-        kSwitchSpace,
         kDedup,
         kAssign,
         kBFSShortest,
@@ -64,6 +63,7 @@ public:
         kCreateSpace,
         kCreateTag,
         kCreateEdge,
+        kSwitchSpace,
         kDescSpace,
         kShowCreateSpace,
         kDescTag,
@@ -159,6 +159,9 @@ public:
         kDownload,
         kIngest,
     };
+
+    PlanNode(QueryContext* qctx, Kind kind);
+    virtual ~PlanNode() = default;
 
     bool isQueryNode() const {
         return kind_ < Kind::kStart;
