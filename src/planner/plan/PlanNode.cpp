@@ -363,10 +363,10 @@ BinaryInputNode::BinaryInputNode(QueryContext* qctx,
                                  const PlanNode* right)
     : PlanNode(qctx, kind) {
     addDep(left);
-    readVariable(left->outputVarPtr());
+    if (left) readVariable(left->outputVarPtr());
 
     addDep(right);
-    readVariable(right->outputVarPtr());
+    if (right) readVariable(right->outputVarPtr());
 }
 
 std::unique_ptr<PlanNodeDescription> BinaryInputNode::explain() const {

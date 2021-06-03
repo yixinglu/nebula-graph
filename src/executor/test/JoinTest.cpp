@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "context/QueryContext.h"
+#include "planner/plan/Logic.h"
 #include "planner/plan/Query.h"
 #include "executor/query/InnerJoinExecutor.h"
 #include "executor/query/LeftJoinExecutor.h"
@@ -77,6 +78,12 @@ protected:
         }
     }
 
+    PlanNode* start(const std::string& name) {
+        auto sn = StartNode::make(qctx_.get());
+        sn->setOutputVar(name);
+        return sn;
+    }
+
     void testInnerJoin(std::string left, std::string right, DataSet& expected, int64_t line);
     void testLeftJoin(std::string left, std::string right, DataSet& expected, int64_t line);
 
@@ -91,9 +98,11 @@ void JoinTest::testInnerJoin(std::string left, std::string right,
     VariablePropertyExpression probe(right, "_vid");
     std::vector<Expression*> probeKeys = {&probe};
 
-    auto* join =
-        InnerJoin::make(qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys),
-                       std::move(probeKeys));
+    auto* join = InnerJoin::make(qctx_.get(),
+                                 {start(left), 0},
+                                 {start(right), 0},
+                                 std::move(hashKeys),
+                                 std::move(probeKeys));
     join->setColNames(std::vector<std::string>{
         "src", "dst", kVid, "tag_prop", "edge_prop", kDst});
 
@@ -129,9 +138,11 @@ void JoinTest::testLeftJoin(std::string left, std::string right,
     VariablePropertyExpression probe(right, "dst");
     std::vector<Expression*> probeKeys = {&probe};
 
-    auto* join =
-        LeftJoin::make(qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys),
-                       std::move(probeKeys));
+    auto* join = LeftJoin::make(qctx_.get(),
+                                {start(left), 0},
+                                {start(right), 0},
+                                std::move(hashKeys),
+                                std::move(probeKeys));
     join->setColNames(std::vector<std::string>{
         kVid, "tag_prop", "edge_prop", kDst, "src", "dst"});
 
@@ -198,9 +209,11 @@ TEST_F(JoinTest, InnerJoinTwice) {
         VariablePropertyExpression probe(right, "_vid");
         std::vector<Expression*> probeKeys = {&probe};
 
-        auto* join =
-            InnerJoin::make(qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys),
-                        std::move(probeKeys));
+        auto* join = InnerJoin::make(qctx_.get(),
+                                     {start(left), 0},
+                                     {start(right), 0},
+                                     std::move(hashKeys),
+                                     std::move(probeKeys));
         join->setColNames(
             std::vector<std::string>{"src", "dst", kVid, "tag_prop", "edge_prop", kDst});
 
@@ -218,9 +231,11 @@ TEST_F(JoinTest, InnerJoinTwice) {
     VariablePropertyExpression probe(right, "col1");
     std::vector<Expression*> probeKeys = {&probe};
 
-    auto* join =
-        InnerJoin::make(qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys),
-                    std::move(probeKeys));
+    auto* join = InnerJoin::make(qctx_.get(),
+                                 {start(left), 0},
+                                 {start(right), 0},
+                                 std::move(hashKeys),
+                                 std::move(probeKeys));
     join->setColNames(std::vector<std::string>{
         "src", "dst", kVid, "tag_prop", "edge_prop", kDst, "col1"});
 
@@ -320,8 +335,11 @@ TEST_F(JoinTest, LeftJoinTwice) {
         VariablePropertyExpression probe(right, "dst");
         std::vector<Expression*> probeKeys = {&probe};
 
-        auto* join = LeftJoin::make(
-            qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys), std::move(probeKeys));
+        auto* join = LeftJoin::make(qctx_.get(),
+                                    {start(left), 0},
+                                    {start(right), 0},
+                                    std::move(hashKeys),
+                                    std::move(probeKeys));
         join->setColNames(
             std::vector<std::string>{kVid, "tag_prop", "edge_prop", kDst, "src", "dst"});
 
@@ -338,8 +356,11 @@ TEST_F(JoinTest, LeftJoinTwice) {
     VariablePropertyExpression probe(right, "col1");
     std::vector<Expression*> probeKeys = {&probe};
 
-    auto* join = LeftJoin::make(
-        qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys), std::move(probeKeys));
+    auto* join = LeftJoin::make(qctx_.get(),
+                                {start(left), 0},
+                                {start(right), 0},
+                                std::move(hashKeys),
+                                std::move(probeKeys));
     join->setColNames(
         std::vector<std::string>{kVid, "tag_prop", "edge_prop", kDst, "src", "dst", "col1"});
 
@@ -423,8 +444,11 @@ TEST_F(JoinTest, LeftJoinAndInnerjoin) {
         VariablePropertyExpression probe(right, "dst");
         std::vector<Expression*> probeKeys = {&probe};
 
-        auto* join = LeftJoin::make(
-            qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys), std::move(probeKeys));
+        auto* join = LeftJoin::make(qctx_.get(),
+                                    {start(left), 0},
+                                    {start(right), 0},
+                                    std::move(hashKeys),
+                                    std::move(probeKeys));
         join->setColNames(
             std::vector<std::string>{kVid, "tag_prop", "edge_prop", kDst, "src", "dst"});
 
@@ -441,8 +465,11 @@ TEST_F(JoinTest, LeftJoinAndInnerjoin) {
     VariablePropertyExpression probe(right, "col1");
     std::vector<Expression*> probeKeys = {&probe};
 
-    auto* join = InnerJoin::make(
-        qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys), std::move(probeKeys));
+    auto* join = InnerJoin::make(qctx_.get(),
+                                 {start(left), 0},
+                                 {start(right), 0},
+                                 std::move(hashKeys),
+                                 std::move(probeKeys));
     join->setColNames(
         std::vector<std::string>{kVid, "tag_prop", "edge_prop", kDst, "src", "dst", "col1"});
 
@@ -492,8 +519,11 @@ TEST_F(JoinTest, InnerJoinAndLeftjoin) {
         VariablePropertyExpression probe(right, "dst");
         std::vector<Expression*> probeKeys = {&probe};
 
-        auto* join = InnerJoin::make(
-            qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys), std::move(probeKeys));
+        auto* join = InnerJoin::make(qctx_.get(),
+                                     {start(left), 0},
+                                     {start(right), 0},
+                                     std::move(hashKeys),
+                                     std::move(probeKeys));
         join->setColNames(
             std::vector<std::string>{kVid, "tag_prop", "edge_prop", kDst, "src", "dst"});
 
@@ -510,8 +540,11 @@ TEST_F(JoinTest, InnerJoinAndLeftjoin) {
     VariablePropertyExpression probe(right, "col1");
     std::vector<Expression*> probeKeys = {&probe};
 
-    auto* join = LeftJoin::make(
-        qctx_.get(), nullptr, {left, 0}, {right, 0}, std::move(hashKeys), std::move(probeKeys));
+    auto* join = LeftJoin::make(qctx_.get(),
+                                {start(left), 0},
+                                {start(right), 0},
+                                std::move(hashKeys),
+                                std::move(probeKeys));
     join->setColNames(
         std::vector<std::string>{kVid, "tag_prop", "edge_prop", kDst, "src", "dst", "col1"});
 

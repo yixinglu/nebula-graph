@@ -43,12 +43,13 @@ StatusOr<OptRule::TransformResult> PushFilterDownLeftJoinRule::transform(
     DCHECK_EQ(oldFilterNode->kind(), PlanNode::Kind::kFilter);
     DCHECK_EQ(leftJoinNode->kind(), PlanNode::Kind::kLeftJoin);
     auto* oldLeftJoinNode = static_cast<graph::LeftJoin*>(leftJoinNode);
-    const auto* condition = static_cast<graph::Filter*>(oldFilterNode)->condition();
-    DCHECK(condition);
-    const std::pair<std::string, int64_t>& leftVar = oldLeftJoinNode->leftVar();
-    auto symTable = octx->qctx()->symTable();
-    std::vector<std::string> leftVarColNames = symTable->getVar(leftVar.first)->colNames;
-    auto objPool = octx->qctx()->objPool();
+
+    auto qctx = octx->qctx();
+    auto symTable = qctx->symTable();
+
+    auto leftVar = oldLeftJoinNode->left()->outputVar();
+    std::vector<std::string> leftVarColNames = symTable->getVar(leftVar)->colNames;
+    auto objPool = qctx->objPool();
 
     // split the `condition` based on whether the varPropExpr comes from the left child
     auto picker = [&leftVarColNames](const Expression* e) -> bool {
@@ -73,6 +74,8 @@ StatusOr<OptRule::TransformResult> PushFilterDownLeftJoinRule::transform(
     };
     std::unique_ptr<Expression> filterPicked;
     std::unique_ptr<Expression> filterUnpicked;
+    const auto* condition = static_cast<graph::Filter*>(oldFilterNode)->condition();
+    DCHECK(condition);
     graph::ExpressionUtils::splitFilter(condition, picker, &filterPicked, &filterUnpicked);
 
     if (!filterPicked) {
@@ -80,51 +83,45 @@ StatusOr<OptRule::TransformResult> PushFilterDownLeftJoinRule::transform(
     }
 
     // produce new left Filter node
-    auto* newLeftFilterNode = graph::Filter::make(
-        octx->qctx(),
-        const_cast<graph::PlanNode*>(oldLeftJoinNode->dep()),
-        objPool->add(
-            graph::ExpressionUtils::rewriteInnerVar(filterPicked.get(), leftVar.first).release()));
-    newLeftFilterNode->setInputVar(leftVar.first);
+    auto newCond = graph::ExpressionUtils::rewriteInnerVar(filterPicked.get(), leftVar);
+    auto* newLeftFilterNode = graph::Filter::make(qctx, nullptr, objPool->add(newCond.release()));
+    newLeftFilterNode->setInputVar(leftVar);
     newLeftFilterNode->setColNames(leftVarColNames);
     auto newFilterGroup = OptGroup::create(octx);
     auto newFilterGroupNode = newFilterGroup->makeGroupNode(newLeftFilterNode);
-    for (auto dep : leftJoinGroupNode->dependencies()) {
-        newFilterGroupNode->dependsOn(dep);
-    }
+    auto leftGroup = leftJoinGroupNode->dependencies()[0];
+    newFilterGroupNode->dependsOn(leftGroup);
     auto newLeftFilterOutputVar = newLeftFilterNode->outputVar();
 
     // produce new LeftJoin node
     auto* newLeftJoinNode = static_cast<graph::LeftJoin*>(oldLeftJoinNode->clone());
-    newLeftJoinNode->setLeftVar({newLeftFilterOutputVar, 0});
-    const std::vector<Expression*>& hashKeys = oldLeftJoinNode->hashKeys();
     std::vector<Expression*> newHashKeys;
-    for (auto* k : hashKeys) {
-        newHashKeys.emplace_back(objPool->add(
-            graph::ExpressionUtils::rewriteInnerVar(k, newLeftFilterOutputVar).release()));
+    for (auto* k : oldLeftJoinNode->hashKeys()) {
+        auto hKey = graph::ExpressionUtils::rewriteInnerVar(k, newLeftFilterOutputVar);
+        newHashKeys.emplace_back(objPool->add(hKey.release()));
     }
     newLeftJoinNode->setHashKeys(newHashKeys);
 
     TransformResult result;
     result.eraseAll = true;
+    auto group = filterGroupNode->group();
+    auto rightGroup = leftJoinGroupNode->dependencies()[1];
     if (filterUnpicked) {
-        auto* newAboveFilterNode = graph::Filter::make(octx->qctx(), newLeftJoinNode);
+        auto* newAboveFilterNode = graph::Filter::make(qctx, newLeftJoinNode);
         newAboveFilterNode->setOutputVar(oldFilterNode->outputVar());
         newAboveFilterNode->setCondition(objPool->add(filterUnpicked.release()));
-        auto newAboveFilterGroupNode =
-            OptGroupNode::create(octx, newAboveFilterNode, filterGroupNode->group());
+        auto newAboveFilterGroupNode = OptGroupNode::create(octx, newAboveFilterNode, group);
 
         auto newLeftJoinGroup = OptGroup::create(octx);
         auto newLeftJoinGroupNode = newLeftJoinGroup->makeGroupNode(newLeftJoinNode);
         newAboveFilterGroupNode->setDeps({newLeftJoinGroup});
-        newLeftJoinGroupNode->setDeps({newFilterGroup});
+        newLeftJoinGroupNode->setDeps({newFilterGroup, rightGroup});
         result.newGroupNodes.emplace_back(newAboveFilterGroupNode);
     } else {
         newLeftJoinNode->setOutputVar(oldFilterNode->outputVar());
         newLeftJoinNode->setColNames(oldLeftJoinNode->colNames());
-        auto newLeftJoinGroupNode =
-            OptGroupNode::create(octx, newLeftJoinNode, filterGroupNode->group());
-        newLeftJoinGroupNode->setDeps({newFilterGroup});
+        auto newLeftJoinGroupNode = OptGroupNode::create(octx, newLeftJoinNode, group);
+        newLeftJoinGroupNode->setDeps({newFilterGroup, rightGroup});
         result.newGroupNodes.emplace_back(newLeftJoinGroupNode);
     }
 

@@ -38,12 +38,7 @@ PlanNode* InnerJoinStrategy::joinDataSet(const PlanNode* left, const PlanNode* r
 
     qctx_->objPool()->add(buildExpr);
     qctx_->objPool()->add(probeExpr);
-    auto join = InnerJoin::make(qctx_,
-                               const_cast<PlanNode*>(right),
-                               {left->outputVar(), 0},
-                               {right->outputVar(), 0},
-                               {buildExpr},
-                               {probeExpr});
+    auto join = InnerJoin::make(qctx_, {left, 0}, {right, 0}, {buildExpr}, {probeExpr});
     std::vector<std::string> colNames = left->colNames();
     const auto& rightColNames = right->colNames();
     colNames.insert(colNames.end(), rightColNames.begin(), rightColNames.end());

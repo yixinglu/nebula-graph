@@ -448,13 +448,11 @@ PlanNode* GoValidator::buildJoinDstProps(PlanNode* projectSrcDstProps) {
         projectSrcDstProps->outputVar(), joinDstVidColName_);
     auto* probeKey =
         objPool->makeAndAdd<VariablePropertyExpression>(project->outputVar(), vidColName);
-    auto joinDst =
-        LeftJoin::make(qctx_,
-                       project,
-                       {projectSrcDstProps->outputVar(), ExecutionContext::kLatestVersion},
-                       {project->outputVar(), ExecutionContext::kLatestVersion},
-                       {joinHashKey},
-                       {probeKey});
+    auto joinDst = LeftJoin::make(qctx_,
+                                  {projectSrcDstProps, ExecutionContext::kLatestVersion},
+                                  {project, ExecutionContext::kLatestVersion},
+                                  {joinHashKey},
+                                  {probeKey});
     VLOG(1) << joinDst->outputVar() << " hash key: " << joinHashKey->toString()
             << " probe key: " << probeKey->toString();
     std::vector<std::string> colNames = projectSrcDstProps->colNames();
@@ -476,15 +474,13 @@ PlanNode* GoValidator::buildJoinPipeOrVariableInput(PlanNode* projectFromJoin,
             pool->add(new VariablePropertyExpression(dependencyForJoinInput->outputVar(), kVid));
         auto* probeKey =
             pool->add(new VariablePropertyExpression(projectFromJoin->outputVar(), dstVidColName_));
-        auto* join =
-            LeftJoin::make(qctx_,
-                           dependencyForJoinInput,
-                           {dependencyForJoinInput->outputVar(), ExecutionContext::kLatestVersion},
-                           {projectFromJoin->outputVar(),
-                            steps_.isMToN() ? ExecutionContext::kPreviousOneVersion
-                                                   : ExecutionContext::kLatestVersion},
-                           {joinHashKey},
-                           {probeKey});
+        auto* join = LeftJoin::make(qctx_,
+                                    {dependencyForJoinInput, ExecutionContext::kLatestVersion},
+                                    {projectFromJoin,
+                                     steps_.isMToN() ? ExecutionContext::kPreviousOneVersion
+                                                     : ExecutionContext::kLatestVersion},
+                                    {joinHashKey},
+                                    {probeKey});
         std::vector<std::string> colNames = dependencyForJoinInput->colNames();
         for (auto& col : projectFromJoin->colNames()) {
             colNames.emplace_back(col);
@@ -499,13 +495,14 @@ PlanNode* GoValidator::buildJoinPipeOrVariableInput(PlanNode* projectFromJoin,
         dependencyForJoinInput->outputVar(),
         (steps_.steps() > 1 || steps_.isMToN()) ? from_.firstBeginningSrcVidColName : kVid));
     std::string varName = from_.fromType == kPipe ? inputVarName_ : from_.userDefinedVarName;
-    auto* joinInput =
-        LeftJoin::make(qctx_,
-                       dependencyForJoinInput,
-                       {dependencyForJoinInput->outputVar(), ExecutionContext::kLatestVersion},
-                       {varName, ExecutionContext::kLatestVersion},
-                       {joinHashKey},
-                       {from_.originalSrc});
+    auto variable = qctx_->symTable()->getVar(varName);
+    DCHECK_EQ(variable->writtenBy.size(), 1U);
+    auto right = *variable->writtenBy.begin();
+    auto* joinInput = LeftJoin::make(qctx_,
+                                     {dependencyForJoinInput, ExecutionContext::kLatestVersion},
+                                     {right, ExecutionContext::kLatestVersion},
+                                     {joinHashKey},
+                                     {from_.originalSrc});
     std::vector<std::string> colNames = dependencyForJoinInput->colNames();
     auto* varPtr = qctx_->symTable()->getVar(varName);
     DCHECK(varPtr != nullptr);
@@ -528,13 +525,11 @@ PlanNode* GoValidator::traceToStartVid(PlanNode* projectLeftVarForJoin, PlanNode
     pool->add(hashKey);
     auto probeKey = new VariablePropertyExpression(dedupDstVids->outputVar(), srcVidColName_);
     pool->add(probeKey);
-    auto* join =
-        LeftJoin::make(qctx_,
-                       dedupDstVids,
-                       {projectLeftVarForJoin->outputVar(), ExecutionContext::kLatestVersion},
-                       {dedupDstVids->outputVar(), ExecutionContext::kLatestVersion},
-                       {hashKey},
-                       {probeKey});
+    auto* join = LeftJoin::make(qctx_,
+                                {projectLeftVarForJoin, ExecutionContext::kLatestVersion},
+                                {dedupDstVids, ExecutionContext::kLatestVersion},
+                                {hashKey},
+                                {probeKey});
     std::vector<std::string> colNames = projectLeftVarForJoin->colNames();
     for (auto& col : dedupDstVids->colNames()) {
         colNames.emplace_back(col);

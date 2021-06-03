@@ -16,7 +16,7 @@
 #include "util/ExpressionUtils.h"
 #include "visitor/RewriteVisitor.h"
 
-using JoinStrategyPos = nebula::graph::InnerJoinStrategy::JoinPos;
+using JoinPosStrategy = nebula::graph::InnerJoinStrategy::JoinPos;
 
 namespace nebula {
 namespace graph {
@@ -129,16 +129,15 @@ Status MatchClausePlanner::expandFromNode(const std::vector<NodeInfo>& nodeInfos
     }
 
     // Pattern: ()-[]-...-(start)-...-[]-()
+    SubPlan lp(subplan.root, subplan.root), rp(subplan.root, subplan.root);
+
+    NG_RETURN_IF_ERROR(rightExpandFromNode(nodeInfos, edgeInfos, matchClauseCtx, startIndex, lp));
     NG_RETURN_IF_ERROR(
-        rightExpandFromNode(nodeInfos, edgeInfos, matchClauseCtx, startIndex, subplan));
-    auto left = subplan.root;
-    NG_RETURN_IF_ERROR(
-        leftExpandFromNode(nodeInfos, edgeInfos, matchClauseCtx, startIndex, var, subplan));
+        leftExpandFromNode(nodeInfos, edgeInfos, matchClauseCtx, startIndex, var, rp));
 
     // Connect the left expand and right expand part.
-    auto right = subplan.root;
     subplan.root = SegmentsConnector::innerJoinSegments(
-        matchClauseCtx->qctx, left, right, JoinStrategyPos::kStart, JoinStrategyPos::kStart);
+        matchClauseCtx->qctx, lp.root, rp.root, JoinPosStrategy::kStart, JoinPosStrategy::kStart);
     return Status::OK();
 }
 
@@ -158,9 +157,7 @@ Status MatchClausePlanner::leftExpandFromNode(const std::vector<NodeInfo>& nodeI
                           ->inputVar(inputVar)
                           ->reversely()
                           ->doExpand(nodeInfos[i], edgeInfos[i - 1], &subplan);
-        if (!status.ok()) {
-            return status;
-        }
+        NG_RETURN_IF_ERROR(status);
         if (i < startIndex) {
             auto right = subplan.root;
             VLOG(1) << "left: " << folly::join(",", left->colNames())
@@ -208,9 +205,7 @@ Status MatchClausePlanner::rightExpandFromNode(const std::vector<NodeInfo>& node
                           ->depends(subplan.root)
                           ->inputVar(subplan.root->outputVar())
                           ->doExpand(nodeInfos[i], edgeInfos[i], &subplan);
-        if (!status.ok()) {
-            return status;
-        }
+        NG_RETURN_IF_ERROR(status);
         if (i > startIndex) {
             auto right = subplan.root;
             VLOG(1) << "left: " << folly::join(",", left->colNames())
